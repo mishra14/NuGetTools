@@ -10,30 +10,35 @@ namespace GitLogger
 {
     public static class HttpUtil
     {
-        private static readonly string commitListRequestUri = @"https://api.github.com/repos/nuget/nuget.client/commits";
+        private static readonly string commitListRequestUri = @"https://api.github.com/repos/";
         private static readonly string commitMetadataRequestUri = $@"https://api.github.com/search/issues";
 
-        public static IList<Commit> GetCommits(string startSha)
+        public static IList<Commit> GetCommits(string repository, string startSha)
         {
-            var httpRequest = (HttpWebRequest)WebRequest.Create(commitListRequestUri + "?per_page=100");
+            var httpRequest = (HttpWebRequest)WebRequest.Create(commitListRequestUri+ $"{repository}/commits?per_page=100");
             httpRequest.Method = WebRequestMethods.Http.Get;
             httpRequest.Accept = "application/json";
             httpRequest.UserAgent = "gitlogger";
 
             var commits = new List<Commit>();
-            using (var theResponse = httpRequest.GetResponse())
+            using (var httpResponse = httpRequest.GetResponse())
+            using (var dataStream = httpResponse.GetResponseStream())
             {
-                var dataStream = theResponse.GetResponseStream();
+
+                Console.WriteLine($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
+
                 var reader = new StreamReader(dataStream);
                 object objResponse = reader.ReadToEnd();
-                dataStream.Close();
-                theResponse.Close();
 
                 var jArray = JArray.Parse(objResponse as string);
 
                 foreach (var entry in jArray)
                 {
                     var commit = new Commit(entry);
+                    if (commit.Sha == startSha)
+                    {
+                        break;
+                    }
                     commits.Add(commit);
                 }
             }
@@ -49,13 +54,11 @@ namespace GitLogger
             httpRequest.UserAgent = "gitlogger";
 
             var commits = new List<Commit>();
-            using (var theResponse = httpRequest.GetResponse())
+            using (var httpResponse = httpRequest.GetResponse())
+            using (var dataStream = httpResponse.GetResponseStream())
             {
-                var dataStream = theResponse.GetResponseStream();
                 var reader = new StreamReader(dataStream);
                 object objResponse = reader.ReadToEnd();
-                dataStream.Close();
-                theResponse.Close();
 
                 var jObject = JObject.Parse(objResponse as string);
                 var incompleteResults = jObject.Value<bool>("incomplete_results");
@@ -83,6 +86,14 @@ namespace GitLogger
                     {
                         commit.PR = Tuple.Create(id, url);
                     }
+
+                    var body = item.Value<string>("body");
+                    var issueUrls = GetIssuesFromPRBody(body);
+
+                    if (issueUrls.Count() > 1)
+                    {
+
+                    }
                 }
 
             }
@@ -100,6 +111,25 @@ namespace GitLogger
                 result = Int32.Parse(idStr);
             }
 
+            return result;
+        }
+
+        public static IList<string> GetIssuesFromPRBody(string body)
+        {
+            var result = new List<string>();
+
+            var splitChars = new char[] { '.', '?', '!', ' ', ';', ':', ',', '\r', '\n' };
+            var words = body.Split(splitChars, StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant());
+
+            foreach (var word in words)
+            {
+                if (word.Contains("nuget") &&
+                    word.Contains("home") &&
+                    word.Contains("issues"))
+                {
+                    result.Append(word);
+                }
+            }
             return result;
         }
     }
