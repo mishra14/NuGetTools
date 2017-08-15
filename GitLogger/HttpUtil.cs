@@ -12,15 +12,20 @@ namespace GitLogger
     public static class HttpUtil
     {
         private static readonly string commitListRequestUri = @"https://api.github.com/repos/";
-        private static readonly string commitMetadataRequestUri = $@"https://api.github.com/search/issues";
-        private static readonly string RateLimitRequestUri = $@"https://api.github.com/rate_limit";
+        private static readonly string commitMetadataRequestUri = @"https://api.github.com/search/issues";
+        private static readonly string RateLimitRequestUri = @"https://api.github.com/rate_limit";
+        private static readonly string clientParams = @"client_id={0}&client_secret={1}";
 
-        public static IList<Commit> GetCommits(string repository, string startSha, string cachePath)
+        public static IList<Commit> GetCommits(
+            string repository,
+            string startSha,
+            string cachePath,
+            Tuple<string, string> clientDetails)
         {
             var commits = new List<Commit>();
             var uri = commitListRequestUri + $"{repository}/commits?per_page=100";
 
-            var responseString = GetCachedOrHttpResponse(uri, cachePath);
+            var responseString = GetCachedOrHttpResponse(uri, cachePath, clientDetails, isRequestTypeSearch: false);
 
             var jArray = JArray.Parse(responseString);
 
@@ -37,12 +42,15 @@ namespace GitLogger
             return commits;
         }
 
-        public static void UpdateWithMetadata(Commit commit, string cachePath)
+        public static void UpdateWithMetadata(
+            Commit commit,
+            string cachePath,
+            Tuple<string, string> clientDetails)
         {
 
-            var uri = commitMetadataRequestUri + $"?q={commit.Sha}+type:pr";
+            var uri = commitMetadataRequestUri + $"?q={commit.Sha}";
 
-            var responseString = GetCachedOrHttpResponse(uri, cachePath);
+            var responseString = GetCachedOrHttpResponse(uri, cachePath, clientDetails, isRequestTypeSearch: true);
 
             var jObject = JObject.Parse(responseString);
             var incompleteResults = jObject.Value<bool>("incomplete_results");
@@ -79,8 +87,8 @@ namespace GitLogger
                     Console.WriteLine($"WARNING: Multiple issues found in PR body.");
                 }
 
-                var issues = new List<Tuple<int, string>>(); 
-                foreach(var issueUrl in issueUrls)
+                var issues = new List<Tuple<int, string>>();
+                foreach (var issueUrl in issueUrls)
                 {
                     var issueId = GetIdFromUrl(issueUrl);
 
@@ -89,39 +97,8 @@ namespace GitLogger
                         issues.Add(Tuple.Create(issueId, issueUrl));
                     }
                 }
+
                 commit.Issues = issues;
-            }
-        }
-
-
-        public static void BlockTillRateLimitRefresh()
-        {
-            var httpRequest = (HttpWebRequest)WebRequest.Create(RateLimitRequestUri);
-            httpRequest.Method = WebRequestMethods.Http.Get;
-            httpRequest.Accept = "application/json";
-            httpRequest.UserAgent = "gitlogger";
-
-            using (var httpResponse = httpRequest.GetResponse())
-            using (var dataStream = httpResponse.GetResponseStream())
-            {                
-
-                var reader = new StreamReader(dataStream);
-                object objResponse = reader.ReadToEnd();
-
-                var responseJObject = JObject.Parse(objResponse as string);
-                var rateJObject = responseJObject.Value<JObject>("rate");
-                var limit = rateJObject.Value<int>("limit");
-                var remaining = rateJObject.Value<int>("remaining");
-                var reset = rateJObject.Value<double>("reset");
-
-                if (remaining == 0)
-                {
-                    var timeOut = TimeSpan.FromSeconds(reset);
-                    var dt = new DateTime(timeOut.Ticks);
-                    Console.WriteLine($"WARNING: Github api rate limit reached. Sleeping till {dt.ToLocalTime().ToShortTimeString()}");
-
-                    Thread.Sleep(timeOut);
-                }
             }
         }
 
@@ -159,26 +136,32 @@ namespace GitLogger
             return result;
         }
 
-        public static string GetCachedOrHttpResponse(string uri, string cachePath)
+        public static string GetCachedOrHttpResponse(
+            string uri,
+            string cachePath,
+            Tuple<string, string> clientDetails,
+            bool isRequestTypeSearch)
         {
             var responseString = string.Empty;
-
-            var httpRequest = (HttpWebRequest)WebRequest.Create(uri);
+            var uriWithClientData = uri + "&" + string.Format(clientParams, clientDetails.Item1, clientDetails.Item2);
+            var httpRequest = (HttpWebRequest)WebRequest.Create(uriWithClientData);
             httpRequest.Method = WebRequestMethods.Http.Get;
             httpRequest.Accept = "application/json";
             httpRequest.UserAgent = "gitlogger";
 
-            var cacheFilePath = Path.Combine(cachePath, httpRequest.Address.AbsolutePath.Replace('/', '_') + ".json");
+            var cacheFileName = httpRequest.Address.AbsolutePath + httpRequest.Address.Query + ".json";
+            cacheFileName = cacheFileName.Replace('/', '_').Replace('?', '_').Replace('=', '_').Replace('+', '_').Replace(':', '_');
+            var cacheFilePath = Path.Combine(cachePath, cacheFileName);
 
             if (File.Exists(cacheFilePath))
-            {                
+            {
                 responseString = FileUtil.GetCachedResponse(cacheFilePath);
             }
             else
             {
-                Console.WriteLine($"Making HTTP request: {uri}");
+                Console.WriteLine($"Making HTTP request: {uriWithClientData}");
 
-                BlockTillRateLimitRefresh();
+                BlockTillRateLimitRefresh(clientDetails, isRequestTypeSearch);
 
                 using (var httpResponse = httpRequest.GetResponse())
                 using (var dataStream = httpResponse.GetResponseStream())
@@ -194,6 +177,46 @@ namespace GitLogger
             }
 
             return responseString;
+        }
+
+        private static void BlockTillRateLimitRefresh(Tuple<string, string> clientDetails, bool isRequestTypeSearch)
+        {
+            var uriWithClientData = RateLimitRequestUri + "?" + string.Format(clientParams, clientDetails.Item1, clientDetails.Item2);
+            var httpRequest = (HttpWebRequest)WebRequest.Create(uriWithClientData);
+            httpRequest.Method = WebRequestMethods.Http.Get;
+            httpRequest.Accept = "application/json";
+            httpRequest.UserAgent = "gitlogger";
+
+            using (var httpResponse = httpRequest.GetResponse())
+            using (var dataStream = httpResponse.GetResponseStream())
+            {
+
+                var reader = new StreamReader(dataStream);
+                object objResponse = reader.ReadToEnd();
+
+                var responseJObject = JObject.Parse(objResponse as string);
+                var resourcesJObject = responseJObject.Value<JObject>("resources");
+                var rateJObject = resourcesJObject.Value<JObject>("core");
+
+                if (isRequestTypeSearch)
+                {
+                    rateJObject = resourcesJObject.Value<JObject>("search");
+                }
+
+                var limit = rateJObject.Value<int>("limit");
+                var remaining = rateJObject.Value<int>("remaining");
+                var reset = rateJObject.Value<double>("reset");
+
+                if (remaining == 0)
+                {
+                    var timeOut = TimeSpan.FromSeconds(reset);
+                    var dt = new DateTime(timeOut.Ticks);
+                    Console.WriteLine($"WARNING: Github api rate limit reached. Sleeping till {dt.ToLocalTime().ToShortTimeString()}");
+
+                    Thread.Sleep(timeOut);
+                }
+            }
+
         }
     }
 }

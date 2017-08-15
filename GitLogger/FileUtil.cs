@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -91,23 +92,26 @@ namespace GitLogger
             {
                 row++;
                 var prString = string.Empty;
-                var issueString = string.Empty;
+                var issueStringBuilder = new StringBuilder();
                 var commitString = $"= HYPERLINK(\"{commit.Link}\", \"Commit\")";
 
                 if (commit.PR != null)
                 {
-                    prString = $"= HYPERLINK(\"{commit.PR.Item2}\", \"{commit.PR.Item2}\")";
+                    prString = $"= HYPERLINK(\"{commit.PR.Item2}\", \"{commit.PR.Item1}\")";
                 }
 
-                //if (commit.Issues != null)
-                //{
-                //    issueString = $"= HYPERLINK(\"{commit.Issues.Item2}\", \"Commit\")";
-                //}
+                if (commit.Issues != null)
+                {
+                    foreach(var issue in commit.Issues)
+                    {
+                        issueStringBuilder.AppendLine($"= hyperlink(\"{issue.Item2}\", \"{issue.Item1}\")");
+                    }
+                }
 
 
                 workSheet.Cells[row, "A"] = area;
                 workSheet.Cells[row, "B"] = prString;
-                workSheet.Cells[row, "C"] = issueString;
+                workSheet.Cells[row, "C"] = issueStringBuilder.ToString();
                 workSheet.Cells[row, "D"] = commitString;
                 workSheet.Cells[row, "E"] = commit.Message;
 
@@ -175,6 +179,19 @@ namespace GitLogger
             {
                 Console.WriteLine($"Using cached file: {path}");
                 result = File.ReadAllText(path);
+            }
+
+            return result;
+        }
+
+        public static Tuple<string, string> GetAppCredentials(string path)
+        {
+            Tuple<string, string> result = null;
+
+            if (File.Exists(path))
+            {
+                var lines = File.ReadAllLines(path);
+                result = Tuple.Create(lines[0], lines[1]);
             }
 
             return result;

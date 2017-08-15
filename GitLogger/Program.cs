@@ -22,10 +22,12 @@ namespace GitLogger
 
             Console.WriteLine($"GitLogger: Collecting commit details for repository '{repository}' from commit '{startSha}'");
 
-            var commits = HttpUtil.GetCommits(repository, startSha, cachePath);
+            var clientDetails = FileUtil.GetAppCredentials(Path.Combine(logFolder, "clientcredentials.txt"));
+
+            var commits = HttpUtil.GetCommits(repository, startSha, cachePath, clientDetails);
             foreach (var commit in commits)
             {
-                //HttpUtil.UpdateWithMetadata(commit, cachePath);
+                HttpUtil.UpdateWithMetadata(commit, cachePath, clientDetails);
             }
 
             FileUtil.SaveAsExcel(commits, resultExcelPath);
