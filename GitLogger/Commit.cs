@@ -11,7 +11,7 @@ namespace GitLogger
         public string Author { get; set; }
         public string Message { get; set; }
         public string Link { get; set; }
-        public Tuple<int, string> Issue { get; set; }
+        public IList<Tuple<int, string>> Issues { get; set; }
         public Tuple<int, string> PR { get; set; }
 
         public Commit(JToken token)
@@ -28,11 +28,6 @@ namespace GitLogger
             Link = link;
             Message = message;
 
-        }
-
-        public void PopulateIssueAndPRData()
-        {
-            HttpUtil.UpdateWithMetadata(this);
         }
     }
 }

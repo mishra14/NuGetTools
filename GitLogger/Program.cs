@@ -11,16 +11,24 @@ namespace GitLogger
 
             var startSha = "313a378dbdee355ced26c9501753c1a167286fbf";
             var repository = "nuget/nuget.client";
-            var logPath = @"F:\validation\GitLogger\logs\result.csv";
+            var useCache = true;
+
+            var logFolder = @"F:\validation\GitLogger\logs";
+            var resultCsvPath = Path.Combine(logFolder, "results.csv");
+            var resultExcelPath = Path.Combine(logFolder, "results.xlsx");
+            var cachePath = Path.Combine(logFolder, "cache");
+
+            FileUtil.ClearLogFiles(resultCsvPath, resultExcelPath, cachePath, useCache);
 
             Console.WriteLine($"GitLogger: Collecting commit details for repository '{repository}' from commit '{startSha}'");
-            var commits = HttpUtil.GetCommits(repository, startSha);
+
+            var commits = HttpUtil.GetCommits(repository, startSha, cachePath);
             foreach (var commit in commits)
             {
-                //commit.PopulateIssueAndPRData();
+                //HttpUtil.UpdateWithMetadata(commit, cachePath);
             }
 
-            FileUtil.SaveAsCsv(commits, logPath);
+            FileUtil.SaveAsExcel(commits, resultExcelPath);
         }
     }
 }
