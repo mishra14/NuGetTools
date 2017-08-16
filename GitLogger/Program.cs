@@ -30,7 +30,8 @@ namespace GitLogger
                 HttpUtil.UpdateWithMetadata(commit, cachePath, clientDetails);
             }
 
-            FileUtil.SaveAsExcel(commits, resultExcelPath);
+            FileUtil.SaveAsCsv(commits, resultCsvPath);
+            FileUtil.SaveAsExcel(commits, resultExcelPath);        
         }
     }
 }

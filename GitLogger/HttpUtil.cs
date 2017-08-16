@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace GitLogger
@@ -60,13 +61,13 @@ namespace GitLogger
             {
                 Console.WriteLine($"WARNING: Incomplete results while querying for {commit.Sha}" +
                     Environment.NewLine +
-                    $"Try: {commitMetadataRequestUri}?q={commit.Sha}+type:pr");
+                    $"Try: {uri}");
             }
             if (totalCount != 1)
             {
                 Console.WriteLine($"ERROR: Multiple results while querying for {commit.Sha}" +
                     Environment.NewLine +
-                    $"Try: {commitMetadataRequestUri}?q={commit.Sha}+type:pr");
+                    $"Try: {uri}");
             }
             else
             {
@@ -80,14 +81,14 @@ namespace GitLogger
                 }
 
                 var body = item.Value<string>("body");
-                var issueUrls = GetIssuesFromPrBody(body);
+                var issueUrls = GetLinks(body);
 
                 if (issueUrls.Count() > 1)
                 {
                     Console.WriteLine($"WARNING: Multiple issues found in PR body.");
                 }
 
-                var issues = new List<Tuple<int, string>>();
+                var issues = new HashSet<Tuple<int, string>>();
                 foreach (var issueUrl in issueUrls)
                 {
                     var issueId = GetIdFromUrl(issueUrl);
@@ -117,23 +118,32 @@ namespace GitLogger
             return result;
         }
 
-        public static IList<string> GetIssuesFromPrBody(string body)
+        // Source - https://stackoverflow.com/questions/9125016/get-url-from-a-text
+        public static List<string> GetLinks(string message)
         {
-            var result = new List<string>();
+            List<string> list = new List<string>();
+            Regex urlRx = new Regex(@"((https?|ftp|file)\://|www.)[A-Za-z0-9\.\-]+(/[A-Za-z0-9\?\&\=;\+!'\(\)\*\-\._~%]*)*", 
+                RegexOptions.IgnoreCase);
 
-            var splitChars = new char[] { '.', '?', '!', ' ', ';', ':', ',', '\r', '\n' };
-            var words = body.Split(splitChars, StringSplitOptions.RemoveEmptyEntries).Select(w => w.ToLowerInvariant());
-
-            foreach (var word in words)
+            MatchCollection matches = urlRx.Matches(message);
+            foreach (Match match in matches)
             {
-                if (word.Contains("nuget") &&
-                    word.Contains("home") &&
-                    word.Contains("issues"))
+                var url = match.Value.ToLowerInvariant();
+                if (url.Contains("nuget") &&
+                    url.Contains("home") &&
+                    url.Contains("issues"))
                 {
-                    result.Add(word);
+                    if (Regex.IsMatch(url, @"[\D]*$"))
+                    {
+                        var regex = new Regex(@"[\D]*$");
+                        url = regex.Replace(url, "");
+                    }
+
+                    list.Add(url);
                 }
             }
-            return result;
+
+            return list;
         }
 
         public static string GetCachedOrHttpResponse(
@@ -211,9 +221,9 @@ namespace GitLogger
                 {
                     var timeOut = TimeSpan.FromSeconds(reset);
                     var dt = new DateTime(timeOut.Ticks);
-                    Console.WriteLine($"WARNING: Github api rate limit reached. Sleeping till {dt.ToLocalTime().ToShortTimeString()}");
+                    Console.WriteLine($"WARNING: Github api rate limit reached. Sleeping till {dt.ToLocalTime()}");
 
-                    Thread.Sleep(timeOut);
+                    Thread.Sleep(timeOut.Subtract(TimeSpan.FromTicks(DateTime.Now.ToUniversalTime().Ticks)));
                 }
             }
 

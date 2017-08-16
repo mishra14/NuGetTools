@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -26,29 +27,32 @@ namespace GitLogger
                 {
                     var line = new StringBuilder();
 
-                    var commitString = $"= HYPERLINK(\"{commit.Link}\", \"Commit\")";
+                    var commitString = commit.Link;
                     var prString = string.Empty;
-                    var issueString = string.Empty;
+                    var issueStringBuilder = new StringBuilder();
 
                     if (commit.PR != null)
                     {
-                        prString = $"= HYPERLINK(\"{commit.PR.Item2}\", \"{commit.PR.Item2}\")";
+                        prString = commit.PR.Item2;
                     }
 
-                    //if (commit.Issues != null)
-                    //{
-                    //    issueString = $"= HYPERLINK(\"{commit.Issues.Item2}\", \"Commit\")";
-                    //}
+                    if (commit.Issues != null)
+                    {
+                        foreach (var issue in commit.Issues)
+                        {
+                            issueStringBuilder.Append(issue.Item2 + " ");
+                        }
+                    }
 
                     line.Append(area);
                     line.Append(",");
                     line.Append(prString);
                     line.Append(",");
-                    line.Append(issueString);
+                    line.Append(issueStringBuilder.ToString());
                     line.Append(",");
                     line.Append(commitString);
                     line.Append(",");
-                    line.Append(commit.Message);
+                    line.Append(commit.SanitizedMessage);
 
                     w.WriteLine(line.ToString());
                 }
@@ -78,7 +82,7 @@ namespace GitLogger
             excelApp.Workbooks.Add();
 
             // This example uses a single workSheet. 
-            Excel._Worksheet workSheet = (Excel.Worksheet)excelApp.ActiveSheet;
+            Excel._Worksheet workSheet = (Excel.Worksheet)excelApp.ActiveSheet;         
 
             workSheet.Cells[1, "A"] = "Area";
             workSheet.Cells[1, "B"] = "PR";
@@ -102,10 +106,21 @@ namespace GitLogger
 
                 if (commit.Issues != null)
                 {
-                    foreach(var issue in commit.Issues)
+                    if(commit.Issues.Count > 1)
                     {
-                        issueStringBuilder.AppendLine($"= hyperlink(\"{issue.Item2}\", \"{issue.Item1}\")");
+                        foreach (var issue in commit.Issues)
+                        {
+                            issueStringBuilder.Append(issue.Item2 + "\r\n");
+                        }
                     }
+                    else
+                    {
+                        foreach (var issue in commit.Issues)
+                        {
+                            issueStringBuilder.Append($"= HYPERLINK(\"{issue.Item2}\", \"{issue.Item1}\")");
+                        }
+                    }
+
                 }
 
 
@@ -113,12 +128,14 @@ namespace GitLogger
                 workSheet.Cells[row, "B"] = prString;
                 workSheet.Cells[row, "C"] = issueStringBuilder.ToString();
                 workSheet.Cells[row, "D"] = commitString;
-                workSheet.Cells[row, "E"] = commit.Message;
+                workSheet.Cells[row, "E"] = commit.SanitizedMessage;
 
             }
 
-            workSheet.Range["A1", $"E{row}"].AutoFormat(
+            workSheet.Range["A1", $"E1"].AutoFormat(
                 Excel.XlRangeAutoFormat.xlRangeAutoFormatClassic2);
+
+            workSheet.Range["A1", $"E1"].WrapText = true;
 
             workSheet.SaveAs(path);
 

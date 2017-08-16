@@ -11,8 +11,24 @@ namespace GitLogger
         public string Author { get; set; }
         public string Message { get; set; }
         public string Link { get; set; }
-        public IList<Tuple<int, string>> Issues { get; set; }
+        public ISet<Tuple<int, string>> Issues { get; set; }
         public Tuple<int, string> PR { get; set; }
+        public string SanitizedMessage {
+            get
+            {
+                if (Message != null)
+                {
+                    return Message
+                        .Replace(",", " ")
+                        .Replace("\r", " ")
+                        .Replace("\n", " ");
+                }
+                else
+                {
+                    return Message;
+                }
+            }
+        }
 
         public Commit(JToken token)
         {
