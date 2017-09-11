@@ -53,6 +53,7 @@ namespace GitLogger
                     commits.Add(commit);
                 }
             }
+
             return commits;
         }
 
@@ -104,36 +105,7 @@ namespace GitLogger
                     // If the sha is in the look up, then get more info
                     if (!string.IsNullOrEmpty(commitSha) && commitLookUp.TryGetValue(commitSha, out var commit))
                     {
-                        // Get PR data
-                        var prUrl = entry.Value<string>("html_url");
-                        var prId = GetIdFromUrl(prUrl);
-
-                        if (prId > 0)
-                        {
-                            commit.PR = Tuple.Create(prId, prUrl);
-                        }
-
-                        // Get body and issue data
-                        var body = entry.Value<string>("body");
-                        var issueUrls = GetLinks(body);
-
-                        if (issueUrls.Count() > 1)
-                        {
-                            Console.WriteLine($"WARNING: Multiple issues found in PR body.");
-                        }
-
-                        var issues = new HashSet<Tuple<int, string>>();
-                        foreach (var issueUrl in issueUrls)
-                        {
-                            var issueId = GetIdFromUrl(issueUrl);
-
-                            if (issueId > 0)
-                            {
-                                issues.Add(Tuple.Create(issueId, issueUrl));
-                            }
-                        }
-
-                        commit.Issues = issues;
+                        UpdateWithMetadataFromJToken(entry, commit);
 
                         commitLookUp.Remove(commit.Sha);
 
@@ -144,6 +116,40 @@ namespace GitLogger
                     }
                 }
             }
+        }
+
+        private static void UpdateWithMetadataFromJToken(JToken entry, Commit commit)
+        {
+            // Get PR data
+            var prUrl = entry.Value<string>("html_url");
+            var prId = GetIdFromUrl(prUrl);
+
+            if (prId > 0)
+            {
+                commit.PR = Tuple.Create(prId, prUrl);
+            }
+
+            // Get body and issue data
+            var body = entry.Value<string>("body");
+            var issueUrls = GetLinks(body);
+
+            if (issueUrls.Count() > 1)
+            {
+                Console.WriteLine($"WARNING: Multiple issues found in PR body.");
+            }
+
+            var issues = new HashSet<Tuple<int, string>>();
+            foreach (var issueUrl in issueUrls)
+            {
+                var issueId = GetIdFromUrl(issueUrl);
+
+                if (issueId > 0)
+                {
+                    issues.Add(Tuple.Create(issueId, issueUrl));
+                }
+            }
+
+            commit.Issues = issues;
         }
 
         public static int GetIdFromUrl(string url)
