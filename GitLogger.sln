@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26906.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.Library", "GitLogger\GitLogger.Library.csproj", "{4DDA0533-97E2-499B-A0E4-EBC8545688B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitLogger.AzureFunctions", "GitLogger.AzureFunctions\GitLogger.AzureFunctions.csproj", "{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.AzureFunctions", "GitLogger.AzureFunctions\GitLogger.AzureFunctions.csproj", "{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

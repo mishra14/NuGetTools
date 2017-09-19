@@ -24,8 +24,8 @@ namespace GitLogger
 
             var clientDetails = FileUtil.GetAppCredentials(Path.Combine(logFolder, "clientcredentials.txt"));
 
-            var commits = HttpUtil.GetCommits(repository, startSha, cachePath, clientDetails);
-            HttpUtil.UpdateWithMetadata(repository, commits, cachePath, clientDetails);
+            var commits = HttpUtil.GetCommits(repository, startSha, clientDetails);
+            HttpUtil.UpdateWithMetadata(repository, commits, clientDetails);
 
             FileUtil.SaveAsCsv(commits, resultCsvPath);
             FileUtil.SaveAsExcel(commits, resultExcelPath);
