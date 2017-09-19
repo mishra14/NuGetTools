@@ -27,9 +27,8 @@ namespace GitLogger
             var commits = HttpUtil.GetCommits(repository, startSha, cachePath, clientDetails);
             HttpUtil.UpdateWithMetadata(repository, commits, cachePath, clientDetails);
 
-
             FileUtil.SaveAsCsv(commits, resultCsvPath);
-            FileUtil.SaveAsExcel(commits, resultExcelPath);        
+            FileUtil.SaveAsExcel(commits, resultExcelPath);
         }
     }
 }
