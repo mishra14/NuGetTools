@@ -6,21 +6,22 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
 using System.Net.Http.Headers;
 using System.IO;
+using GitLogger.Library;
 
 namespace GitLogger.AzureFunctions
 {
     public static class WebExecute
     {
-        public static string InputPage = "<!DOCTYPE html>" + 
-            "<html>" + 
+        public static string InputPage = "<!DOCTYPE html>" +
+            "<html>" +
             "<body>" + "" +
-            "<h1><a href=\"https://github.com/mishra14/GitLogger\">GitLogger</a></h1>" + 
-            "<form>" + 
-            "Commit SHA: <input type=\"text\" name=\"commitSha\"><br><br>" + 
-            "Repository Name:  <input type=\"text\" name=\"repoName\" value=\"nuget/nuget.client\"><br><br>" + 
-            "<input type=\"button\" name=\"submit\" value=\"Submit\"><br><br>" + 
-            "</form>" + 
-            "</body>" + 
+            "<h1><a href=\"https://github.com/mishra14/GitLogger\">GitLogger</a></h1>" +
+            "<form>" +
+            "Commit SHA: <input type=\"text\" name=\"commitSha\"><br><br>" +
+            "Repository Name:  <input type=\"text\" name=\"repoName\" value=\"nuget/nuget.client\"><br><br>" +
+            "<input type=\"button\" name=\"submit\" value=\"Submit\"><br><br>" +
+            "</form>" +
+            "</body>" +
             "</html>";
 
         [FunctionName("WebExecute")]
@@ -34,6 +35,7 @@ namespace GitLogger.AzureFunctions
             {
                 response.StatusCode = HttpStatusCode.OK;
                 response.Content = new StringContent(InputPage);
+
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                 return response;
             }
@@ -42,9 +44,9 @@ namespace GitLogger.AzureFunctions
                 var repository = string.Empty;
                 var commitSha = string.Empty;
 
-                log.Verbose($"GitLogger: Collecting commit details for repository '{repository}' from commit '{commitSha}'");
+                log.Info($"GitLogger: Collecting commit details for repository '{repository}' from commit '{commitSha}'");
 
-                var clientDetails = FileUtil.GetAppCredentials(Path.Combine("", "clientcredentials.txt"));
+                var clientDetails = AzureUtil.GetAppCredentials(Path.Combine("", "clientcredentials.txt"));
                 var commits = HttpUtil.GetCommits(repository, commitSha, clientDetails);
                 HttpUtil.UpdateWithMetadata(repository, commits, clientDetails);
 

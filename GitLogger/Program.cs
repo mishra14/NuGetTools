@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GitLogger.Library;
+using System;
 using System.Collections.Generic;
 using System.IO;
 

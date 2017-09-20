@@ -8,7 +8,7 @@ using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public static class FileUtil
     {

@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public static class HttpUtil
     {
