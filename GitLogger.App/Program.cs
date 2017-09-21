@@ -1,15 +1,13 @@
 ﻿using GitLogger.Library;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
-namespace GitLogger
+namespace GitLogger.App
 {
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
-
             var startSha = "313a378dbdee355ced26c9501753c1a167286fbf";
             var repository = "nuget/nuget.client";
             var useCache = false;

@@ -16,7 +16,7 @@ namespace GitLogger.AzureFunctions
         [FunctionName("WebExecute")]
         public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "request")]HttpRequestMessage req, TraceWriter log)
         {
-            log.Info("C# HTTP trigger function processed a request.");
+            log.Info("GitLogger: C# HTTP trigger function processed a request.");
             var response = req.CreateResponse();
 
 
@@ -28,7 +28,7 @@ namespace GitLogger.AzureFunctions
                 if (string.IsNullOrEmpty(repository) || string.IsNullOrEmpty(commitSha))
                 {
                     response.StatusCode = HttpStatusCode.OK;
-                    response.Content = new StringContent(File.ReadAllText("request.html"));
+                    response.Content = new StringContent(html.request);
                     response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                 }
                 else
@@ -41,7 +41,7 @@ namespace GitLogger.AzureFunctions
                     {
                         log.Info($"GitLogger: Unable to read gitlogger app credentials.");
                         response.StatusCode = HttpStatusCode.ExpectationFailed;
-                        response.Content = new StringContent(File.ReadAllText("error.html"));
+                        response.Content = new StringContent(html.error);
                         response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                     }
                     else
@@ -73,7 +73,7 @@ namespace GitLogger.AzureFunctions
             else
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent(File.ReadAllText("unsupported.html"));
+                response.Content = new StringContent(html.unsupported);
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
             }
 
