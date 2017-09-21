@@ -143,6 +143,7 @@ namespace GitLogger.Library
 
             workSheet.SaveAs(path);
 
+            excelApp.ActiveWorkbook.Close();
             excelApp.Quit();
 
             Console.WriteLine($"Saving results file: {path}");

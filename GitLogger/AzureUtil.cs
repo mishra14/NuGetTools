@@ -8,9 +8,13 @@ namespace GitLogger.Library
 {
     public static class AzureUtil
     {
-        public static Tuple<string, string> GetAppCredentials(string path)
+        public static Tuple<string, string> GetAppCredentials()
         {
             Tuple<string, string> result = null;
+            var appId = Environment.GetEnvironmentVariable("GitLoggerGitHubClientId");
+            var appSecret = Environment.GetEnvironmentVariable("GitLoggerGitHubClientSecret");
+
+            result = Tuple.Create(appId, appSecret);
 
             return result;
         }

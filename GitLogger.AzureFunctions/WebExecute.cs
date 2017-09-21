@@ -12,17 +12,6 @@ namespace GitLogger.AzureFunctions
 {
     public static class WebExecute
     {
-        public static string InputPage = "<!DOCTYPE html>" +
-            "<html>" +
-            "<body>" + "" +
-            "<h1><a href=\"https://github.com/mishra14/GitLogger\">GitLogger</a></h1>" +
-            "<form>" +
-            "Commit SHA: <input type=\"text\" name=\"commitSha\"><br><br>" +
-            "Repository Name:  <input type=\"text\" name=\"repoName\" value=\"nuget/nuget.client\"><br><br>" +
-            "<input type=\"button\" name=\"submit\" value=\"Submit\"><br><br>" +
-            "</form>" +
-            "</body>" +
-            "</html>";
 
         [FunctionName("WebExecute")]
         public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "request")]HttpRequestMessage req, TraceWriter log)
@@ -32,37 +21,63 @@ namespace GitLogger.AzureFunctions
 
 
             if (req.Method == HttpMethod.Get)
-            {
-                response.StatusCode = HttpStatusCode.OK;
-                response.Content = new StringContent(InputPage);
+            {                
+                var repository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "repoName").Value;
+                var commitSha = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "commitSha").Value;
 
-                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
-                return response;
-            }
-            else if (req.Method == HttpMethod.Put)
-            {
-                var repository = string.Empty;
-                var commitSha = string.Empty;
+                if (string.IsNullOrEmpty(repository) || string.IsNullOrEmpty(commitSha))
+                {
+                    response.StatusCode = HttpStatusCode.OK;
+                    response.Content = new StringContent(File.ReadAllText("request.html"));
+                    response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+                }
+                else
+                {
+                    log.Info($"GitLogger: Collecting commit details for repository '{repository}' from commit '{commitSha}'.");
 
-                log.Info($"GitLogger: Collecting commit details for repository '{repository}' from commit '{commitSha}'");
+                    var clientDetails = AzureUtil.GetAppCredentials();
 
-                var clientDetails = AzureUtil.GetAppCredentials(Path.Combine("", "clientcredentials.txt"));
-                var commits = HttpUtil.GetCommits(repository, commitSha, clientDetails);
-                HttpUtil.UpdateWithMetadata(repository, commits, clientDetails);
+                    if (string.IsNullOrEmpty(repository) || string.IsNullOrEmpty(commitSha))
+                    {
+                        log.Info($"GitLogger: Unable to read gitlogger app credentials.");
+                        response.StatusCode = HttpStatusCode.ExpectationFailed;
+                        response.Content = new StringContent(File.ReadAllText("error.html"));
+                        response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+                    }
+                    else
+                    {
+                        log.Info($"GitLogger: Gitlogger credentials read as client Id: '{clientDetails.Item1}' and clientSecret: '{clientDetails.Item2}'");
 
-                // Fetching the name from the path parameter in the request URL
-                return req.CreateResponse(HttpStatusCode.OK, "PUT: Hello ");
+                        var commits = HttpUtil.GetCommits(repository, commitSha, clientDetails);
+                        HttpUtil.UpdateWithMetadata(repository, commits, clientDetails);
+
+                        // Generate temp file to hold the result.
+                        var resultFilePath = Path.GetTempFileName();
+                        FileUtil.SaveAsExcel(commits, resultFilePath);
+
+
+                        var stream = new FileStream(resultFilePath, FileMode.Open);
+
+                        response.StatusCode = HttpStatusCode.OK;
+                        response.Content = new StreamContent(stream);
+                        response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                        {
+                            FileName = "result.xlsx"
+                        };
+
+                        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                        response.Content.Headers.ContentLength = stream.Length;
+                    }
+                }
             }
             else
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent("<!DOCTYPE html><html><body><h1>GitLogger</h1><p>Bad Request. This app only supports GET and PUT requests.</p></body></html>");
+                response.Content = new StringContent(File.ReadAllText("unsupported.html"));
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
             }
 
             return response;
-
         }
-
     }
 }
