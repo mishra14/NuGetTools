@@ -8,7 +8,7 @@ using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public static class FileUtil
     {
@@ -143,6 +143,7 @@ namespace GitLogger
 
             workSheet.SaveAs(path);
 
+            excelApp.ActiveWorkbook.Close();
             excelApp.Quit();
 
             Console.WriteLine($"Saving results file: {path}");

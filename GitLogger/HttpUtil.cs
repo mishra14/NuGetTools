@@ -8,19 +8,19 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public static class HttpUtil
     {
+        //private static readonly string githubSearchUri = @"https://api.github.com/search/issues";
+
         private static readonly string githubApiUri = @"https://api.github.com/repos/";
-        private static readonly string githubSearchUri = @"https://api.github.com/search/issues";
         private static readonly string RateLimitRequestUri = @"https://api.github.com/rate_limit";
         private static readonly string clientParams = @"client_id={0}&client_secret={1}";
 
         public static IList<Commit> GetCommits(
             string repository,
             string startSha,
-            string cachePath,
             Tuple<string, string> clientDetails)
         {
             var commits = new List<Commit>();
@@ -32,7 +32,7 @@ namespace GitLogger
             {
                 var uri = githubApiUri + $"{repository}/commits?per_page=100&page={page++}";
 
-                var responseString = GetCachedOrHttpResponse(uri, cachePath, clientDetails, isRequestTypeSearch: false, useCache: false);
+                var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
 
                 var jArray = JArray.Parse(responseString);
 
@@ -57,21 +57,9 @@ namespace GitLogger
             return commits;
         }
 
-        public static IList<Commit> GetPullRequests(
-            string repository,
-            string startSha,
-            string cachePath,
-            Tuple<string, string> clientDetails)
-        {
-            var commits = new List<Commit>();
-
-            return commits;
-        }
-
         public static void UpdateWithMetadata(
             string repository,
             IList<Commit> commits,
-            string cachePath,
             Tuple<string, string> clientDetails)
         {
             var commitLookUp = new Dictionary<string, Commit>();
@@ -87,7 +75,7 @@ namespace GitLogger
             {
                 var uri = githubApiUri + $"{repository}/pulls?state=all&per_page=100&page={page++}";
 
-                var responseString = GetCachedOrHttpResponse(uri, cachePath, clientDetails, isRequestTypeSearch: false, useCache: false);
+                var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
 
                 var jArray = JArray.Parse(responseString);
 
@@ -242,6 +230,34 @@ namespace GitLogger
                
                     responseString = objResponse as string;
                 }
+            }
+
+            return responseString;
+        }
+
+        public static string GetHttpResponse(
+            string uri,
+            Tuple<string, string> clientDetails,
+            bool isRequestTypeSearch)
+        {
+            var responseString = string.Empty;
+            var uriWithClientData = uri + "&" + string.Format(clientParams, clientDetails.Item1, clientDetails.Item2);
+            var httpRequest = (HttpWebRequest)WebRequest.Create(uriWithClientData);
+            httpRequest.Method = WebRequestMethods.Http.Get;
+            httpRequest.Accept = "application/json";
+            httpRequest.UserAgent = "gitlogger";
+
+            Console.WriteLine($"Making HTTP request: {uriWithClientData}");
+
+            BlockTillRateLimitRefresh(clientDetails, isRequestTypeSearch);
+
+            using (var httpResponse = httpRequest.GetResponse())
+            using (var dataStream = httpResponse.GetResponseStream())
+            {
+                Console.WriteLine($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
+                var reader = new StreamReader(dataStream);
+                var objResponse = reader.ReadToEnd();
+                responseString = objResponse as string;
             }
 
             return responseString;
