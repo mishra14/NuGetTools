@@ -53,7 +53,12 @@ namespace GitLogger.AzureFunctions
 
                         // Generate temp file to hold the result.
                         var resultFilePath = Path.GetTempFileName();
-                        FileUtil.SaveAsExcel(commits, resultFilePath);
+
+                        // Using CSV as interop excel package does not work on an azure function
+                        var responseFileName = "result.csv";
+                        FileUtil.SaveAsCsv(commits, resultFilePath);
+
+                        //FileUtil.SaveAsExcel(commits, resultFilePath);
 
 
                         var stream = new FileStream(resultFilePath, FileMode.Open);
@@ -62,7 +67,7 @@ namespace GitLogger.AzureFunctions
                         response.Content = new StreamContent(stream);
                         response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
                         {
-                            FileName = "result.xlsx"
+                            FileName = responseFileName
                         };
 
                         response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
