@@ -149,6 +149,35 @@ namespace GitLogger.Library
             Console.WriteLine($"Saving results file: {path}");
         }
 
+        public static void SaveAsHtml(IList<Commit> commits, string path)
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+
+            var html = new StringBuilder();
+
+            html.AppendLine("<!DOCTYPE html>");
+            html.AppendLine("<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
+            html.AppendLine("<head>");
+            html.AppendLine("<meta charset=\"utf-8\" />");
+            html.AppendLine("<title>GitLogger Request Page</title>");
+            html.AppendLine("</head>");
+
+            html.AppendLine("<body>");
+
+            html.AppendLine("<h1><a href=\"https://github.com/mishra14/GitLogger\">GitLogger</a></h1>");
+
+            // add a table of all commits here
+
+            html.AppendLine("</body>");
+
+            html.AppendLine("</html>");
+
+
+        }
+
         public static void ClearLogFiles(string resultCsvPath, string resultExcelPath, string cachePath, bool useCache)
         {
             if (!Directory.Exists(cachePath))
