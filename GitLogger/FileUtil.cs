@@ -8,7 +8,7 @@ using System.Text;
 using Excel = Microsoft.Office.Interop.Excel;
 
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public static class FileUtil
     {
@@ -21,7 +21,7 @@ namespace GitLogger
 
             using (StreamWriter w = File.AppendText(path))
             {
-                w.WriteLine("Area, PR, Issues, Commit, Message");
+                w.WriteLine("Area, PR, Issues, Commit, Author, Message");
                 var area = "";
                 foreach (var commit in commits)
                 {
@@ -51,6 +51,8 @@ namespace GitLogger
                     line.Append(issueStringBuilder.ToString());
                     line.Append(",");
                     line.Append(commitString);
+                    line.Append(",");
+                    line.Append(commit.Author);
                     line.Append(",");
                     line.Append(commit.SanitizedMessage);
 
@@ -88,7 +90,8 @@ namespace GitLogger
             workSheet.Cells[1, "B"] = "PR";
             workSheet.Cells[1, "C"] = "Issues";
             workSheet.Cells[1, "D"] = "Commit";
-            workSheet.Cells[1, "E"] = "Message";
+            workSheet.Cells[1, "E"] = "Author";
+            workSheet.Cells[1, "F"] = "Message";
 
             var row = 1;
             var area = "";
@@ -128,7 +131,8 @@ namespace GitLogger
                 workSheet.Cells[row, "B"] = prString;
                 workSheet.Cells[row, "C"] = issueStringBuilder.ToString();
                 workSheet.Cells[row, "D"] = commitString;
-                workSheet.Cells[row, "E"] = commit.SanitizedMessage;
+                workSheet.Cells[row, "E"] = commit.Author;
+                workSheet.Cells[row, "F"] = commit.SanitizedMessage;
 
             }
 
@@ -139,6 +143,7 @@ namespace GitLogger
 
             workSheet.SaveAs(path);
 
+            excelApp.ActiveWorkbook.Close();
             excelApp.Quit();
 
             Console.WriteLine($"Saving results file: {path}");

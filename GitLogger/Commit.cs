@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public class Commit
     {

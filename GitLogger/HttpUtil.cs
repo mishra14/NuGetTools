@@ -8,99 +8,136 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace GitLogger
+namespace GitLogger.Library
 {
     public static class HttpUtil
     {
-        private static readonly string commitListRequestUri = @"https://api.github.com/repos/";
-        private static readonly string commitMetadataRequestUri = @"https://api.github.com/search/issues";
+        //private static readonly string githubSearchUri = @"https://api.github.com/search/issues";
+
+        private static readonly string githubApiUri = @"https://api.github.com/repos/";
         private static readonly string RateLimitRequestUri = @"https://api.github.com/rate_limit";
         private static readonly string clientParams = @"client_id={0}&client_secret={1}";
 
         public static IList<Commit> GetCommits(
             string repository,
             string startSha,
-            string cachePath,
             Tuple<string, string> clientDetails)
         {
             var commits = new List<Commit>();
-            var uri = commitListRequestUri + $"{repository}/commits?per_page=100";
 
-            var responseString = GetCachedOrHttpResponse(uri, cachePath, clientDetails, isRequestTypeSearch: false);
+            var page = 1;
+            var done = false;
 
-            var jArray = JArray.Parse(responseString);
-
-            foreach (var entry in jArray)
+            while (!done)
             {
-                var commit = new Commit(entry);
-                if (commit.Sha == startSha)
+                var uri = githubApiUri + $"{repository}/commits?per_page=100&page={page++}";
+
+                var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
+
+                var jArray = JArray.Parse(responseString);
+
+                if (jArray.Count == 0)
                 {
+                    Console.WriteLine("WARNING: Exiting commit lookup without finding the original commit");
                     break;
                 }
-                commits.Add(commit);
+
+                foreach (var entry in jArray)
+                {
+                    var commit = new Commit(entry);
+                    if (commit.Sha == startSha)
+                    {
+                        done = true;
+                        break;
+                    }
+                    commits.Add(commit);
+                }
             }
 
             return commits;
         }
 
         public static void UpdateWithMetadata(
-            Commit commit,
-            string cachePath,
+            string repository,
+            IList<Commit> commits,
             Tuple<string, string> clientDetails)
         {
+            var commitLookUp = new Dictionary<string, Commit>();
 
-            var uri = commitMetadataRequestUri + $"?q={commit.Sha}";
-
-            var responseString = GetCachedOrHttpResponse(uri, cachePath, clientDetails, isRequestTypeSearch: true);
-
-            var jObject = JObject.Parse(responseString);
-            var incompleteResults = jObject.Value<bool>("incomplete_results");
-            var totalCount = jObject.Value<int>("total_count");
-
-            if (incompleteResults)
+            foreach (var commit in commits)
             {
-                Console.WriteLine($"WARNING: Incomplete results while querying for {commit.Sha}" +
-                    Environment.NewLine +
-                    $"Try: {uri}");
+                commitLookUp.Add(commit.Sha, commit);
             }
-            if (totalCount != 1)
-            {
-                Console.WriteLine($"ERROR: Multiple results while querying for {commit.Sha}" +
-                    Environment.NewLine +
-                    $"Try: {uri}");
-            }
-            else
-            {
-                var item = jObject.Value<JArray>("items")[0];
-                var prUrl = item.Value<string>("html_url");
-                var prId = GetIdFromUrl(prUrl);
 
-                if (prId > 0)
+            var page = 1;
+
+            while (commitLookUp.Count > 0)
+            {
+                var uri = githubApiUri + $"{repository}/pulls?state=all&per_page=100&page={page++}";
+
+                var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
+
+                var jArray = JArray.Parse(responseString);
+
+                if (jArray.Count == 0)
                 {
-                    commit.PR = Tuple.Create(prId, prUrl);
+                    Console.WriteLine("WARNING: Exiting PR lookup without finiding PRs for all commits");
+                    break;
                 }
 
-                var body = item.Value<string>("body");
-                var issueUrls = GetLinks(body);
-
-                if (issueUrls.Count() > 1)
+                foreach (var entry in jArray)
                 {
-                    Console.WriteLine($"WARNING: Multiple issues found in PR body.");
-                }
+                    // Get merge commit sha
+                    var commitSha = entry.Value<string>("merge_commit_sha");
 
-                var issues = new HashSet<Tuple<int, string>>();
-                foreach (var issueUrl in issueUrls)
-                {
-                    var issueId = GetIdFromUrl(issueUrl);
-
-                    if (issueId > 0)
+                    // If the sha is in the look up, then get more info
+                    if (!string.IsNullOrEmpty(commitSha) && commitLookUp.TryGetValue(commitSha, out var commit))
                     {
-                        issues.Add(Tuple.Create(issueId, issueUrl));
+                        UpdateWithMetadataFromJToken(entry, commit);
+
+                        commitLookUp.Remove(commit.Sha);
+
+                        if (commitLookUp.Count == 0)
+                        {
+                            break;
+                        }
                     }
                 }
-
-                commit.Issues = issues;
             }
+        }
+
+        private static void UpdateWithMetadataFromJToken(JToken entry, Commit commit)
+        {
+            // Get PR data
+            var prUrl = entry.Value<string>("html_url");
+            var prId = GetIdFromUrl(prUrl);
+
+            if (prId > 0)
+            {
+                commit.PR = Tuple.Create(prId, prUrl);
+            }
+
+            // Get body and issue data
+            var body = entry.Value<string>("body");
+            var issueUrls = GetLinks(body);
+
+            if (issueUrls.Count() > 1)
+            {
+                Console.WriteLine($"WARNING: Multiple issues found in PR body.");
+            }
+
+            var issues = new HashSet<Tuple<int, string>>();
+            foreach (var issueUrl in issueUrls)
+            {
+                var issueId = GetIdFromUrl(issueUrl);
+
+                if (issueId > 0)
+                {
+                    issues.Add(Tuple.Create(issueId, issueUrl));
+                }
+            }
+
+            commit.Issues = issues;
         }
 
         public static int GetIdFromUrl(string url)
@@ -150,7 +187,8 @@ namespace GitLogger
             string uri,
             string cachePath,
             Tuple<string, string> clientDetails,
-            bool isRequestTypeSearch)
+            bool isRequestTypeSearch,
+            bool useCache)
         {
             var responseString = string.Empty;
             var uriWithClientData = uri + "&" + string.Format(clientParams, clientDetails.Item1, clientDetails.Item2);
@@ -160,10 +198,15 @@ namespace GitLogger
             httpRequest.UserAgent = "gitlogger";
 
             var cacheFileName = httpRequest.Address.AbsolutePath + httpRequest.Address.Query + ".json";
-            cacheFileName = cacheFileName.Replace('/', '_').Replace('?', '_').Replace('=', '_').Replace('+', '_').Replace(':', '_');
+            cacheFileName = cacheFileName.Replace('/', '_')
+                .Replace('?', '_')
+                .Replace('=', '_')
+                .Replace('+', '_')
+                .Replace(':', '_');
+
             var cacheFilePath = Path.Combine(cachePath, cacheFileName);
 
-            if (File.Exists(cacheFilePath))
+            if (useCache && File.Exists(cacheFilePath))
             {
                 responseString = FileUtil.GetCachedResponse(cacheFilePath);
             }
@@ -178,12 +221,43 @@ namespace GitLogger
                 {
                     Console.WriteLine($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
                     var reader = new StreamReader(dataStream);
-                    object objResponse = reader.ReadToEnd();
+                    var objResponse = reader.ReadToEnd();
 
-                    FileUtil.CacheResponse(cacheFilePath, objResponse as string);
-
+                    if (useCache)
+                    {
+                        FileUtil.CacheResponse(cacheFilePath, objResponse as string);
+                    }
+               
                     responseString = objResponse as string;
                 }
+            }
+
+            return responseString;
+        }
+
+        public static string GetHttpResponse(
+            string uri,
+            Tuple<string, string> clientDetails,
+            bool isRequestTypeSearch)
+        {
+            var responseString = string.Empty;
+            var uriWithClientData = uri + "&" + string.Format(clientParams, clientDetails.Item1, clientDetails.Item2);
+            var httpRequest = (HttpWebRequest)WebRequest.Create(uriWithClientData);
+            httpRequest.Method = WebRequestMethods.Http.Get;
+            httpRequest.Accept = "application/json";
+            httpRequest.UserAgent = "gitlogger";
+
+            Console.WriteLine($"Making HTTP request: {uriWithClientData}");
+
+            BlockTillRateLimitRefresh(clientDetails, isRequestTypeSearch);
+
+            using (var httpResponse = httpRequest.GetResponse())
+            using (var dataStream = httpResponse.GetResponseStream())
+            {
+                Console.WriteLine($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
+                var reader = new StreamReader(dataStream);
+                var objResponse = reader.ReadToEnd();
+                responseString = objResponse as string;
             }
 
             return responseString;
