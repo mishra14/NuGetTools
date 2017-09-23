@@ -19,9 +19,9 @@ namespace GitLogger.Library
                 File.Delete(path);
             }
 
-            using (StreamWriter w = File.AppendText(path))
+            using (var w = File.AppendText(path))
             {
-                w.WriteLine("Area, PR, Issues, Commit, Author, Message");
+                w.WriteLine("Area, PR, Issues, Commit, Author, Commit Message");
                 var area = "";
                 foreach (var commit in commits)
                 {
@@ -91,7 +91,7 @@ namespace GitLogger.Library
             workSheet.Cells[1, "C"] = "Issues";
             workSheet.Cells[1, "D"] = "Commit";
             workSheet.Cells[1, "E"] = "Author";
-            workSheet.Cells[1, "F"] = "Message";
+            workSheet.Cells[1, "F"] = "Commit Message";
 
             var row = 1;
             var area = "";
@@ -145,6 +145,83 @@ namespace GitLogger.Library
 
             excelApp.ActiveWorkbook.Close();
             excelApp.Quit();
+
+            Console.WriteLine($"Saving results file: {path}");
+        }
+
+        public static void SaveAsHtml(IList<Commit> commits, string path)
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+
+            using (var w = File.AppendText(path))
+            {
+                w.WriteLine("<!DOCTYPE html>");
+                w.WriteLine("<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
+                w.WriteLine("<head>");
+                w.WriteLine("<meta charset=\"utf-8\" />");
+                w.WriteLine("<title>GitLogger Result</title>");
+                w.WriteLine("<style>");
+                w.WriteLine("table, th, td {");
+                w.WriteLine("    border: 1px solid black;");
+                w.WriteLine("    border-collapse: collapse;");
+                w.WriteLine("    padding: 15px;");
+                w.WriteLine("    text-align: left;");
+                w.WriteLine("}");
+                w.WriteLine("</style>");
+                w.WriteLine("</head>");
+
+                w.WriteLine("<body>");
+
+                w.WriteLine("<table style=\"width:100%\">");
+                w.WriteLine("<tr>");
+                w.WriteLine("<th>Area</th>");
+                w.WriteLine("<th>PR</th>");
+                w.WriteLine("<th>Issue(s)</th>");
+                w.WriteLine("<th>Commit</th>");
+                w.WriteLine("<th>Author</th>");
+                w.WriteLine("<th>Commit Message</th>");
+                w.WriteLine("<tr>");
+
+                // add a table of all commits here
+
+                foreach (var commit in commits)
+                {
+                    var commitString = commit.Link;
+                    var prString = string.Empty;
+                    var issueStringBuilder = new StringBuilder();
+
+                    if (commit.PR != null)
+                    {
+                        prString = $"<a href=\"{commit.PR.Item2}\">{commit.PR.Item1}</a>";
+                    }
+
+                    if (commit.Issues != null)
+                    {
+                        foreach (var issue in commit.Issues)
+                        {
+                            issueStringBuilder.Append($"<a href=\"{issue.Item2}\">{issue.Item1}</a>");
+                            issueStringBuilder.Append($"</br>");
+                        }
+                    }
+
+
+                    w.WriteLine("<tr>");
+                    w.WriteLine($"<td></td>");
+                    w.WriteLine($"<td>{prString}</td>");
+                    w.WriteLine($"<td>{issueStringBuilder.ToString()}</td>");
+                    w.WriteLine($"<td><a href=\"{commit.Link}\">{commit.Sha}</a></td>");
+                    w.WriteLine($"<td>{commit.Author}</td>");
+                    w.WriteLine($"<td>{commit.SanitizedMessage}</td>");
+                    w.WriteLine("<tr>");
+
+                }
+
+                w.WriteLine("</body>");
+                w.WriteLine("</html>");
+            }
 
             Console.WriteLine($"Saving results file: {path}");
         }
