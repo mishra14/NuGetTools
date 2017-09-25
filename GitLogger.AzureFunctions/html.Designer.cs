@@ -91,15 +91,37 @@ namespace GitLogger.AzureFunctions {
         ///&lt;html lang=&quot;en&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
         ///&lt;head&gt;
         ///    &lt;meta charset=&quot;utf-8&quot; /&gt;
+        ///    &lt;title&gt;GitLogger Invalid Input Page&lt;/title&gt;
+        ///&lt;/head&gt;
+        ///&lt;body&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
+        ///
+        ///    Invalid request. Please provide the following inputs: &lt;br/&gt;&lt;br/&gt;
+        ///    
+        ///    Start Commit SHA: The commit sha for the starting commit to be used while generating logs.&lt;br /&gt;&lt;br /&gt;
+        ///
+        ///    Code Repository: Github code repository name in the format - Owner [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string inputError {
+            get {
+                return ResourceManager.GetString("inputError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;!DOCTYPE html&gt;
+        ///
+        ///&lt;html lang=&quot;en&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+        ///&lt;head&gt;
+        ///    &lt;meta charset=&quot;utf-8&quot; /&gt;
         ///    &lt;title&gt;GitLogger Request Page&lt;/title&gt;
         ///&lt;/head&gt;
         ///&lt;body&gt;
         ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
         ///    &lt;form action=&quot;/api/request&quot;&gt;
-        ///        &quot;Commit SHA: &lt;input type=&quot;text&quot; name=&quot;commitSha&quot;&gt;&lt;br&gt;&lt;br&gt;
-        ///        &quot;Repository Name:  &lt;input type=&quot;text&quot; name=&quot;repoName&quot; value=&quot;nuget/nuget.client&quot;&gt;&lt;br&gt;&lt;br&gt;
-        ///        &lt;input type=&quot;submit&quot; value=&quot;Submit&quot;&gt;&lt;br&gt;&lt;br&gt;
-        ///    &lt;/form [rest of string was truncated]&quot;;.
+        ///        Start Commit SHA: &lt;input type=&quot;text&quot; name=&quot;startCommitSha&quot;&gt;&lt;br&gt;&lt;br&gt;
+        ///        Code Repository Name: &lt;input type=&quot;text&quot; name=&quot;codeRepoName&quot; value=&quot;NuGet/NuGet.Client&quot;&gt;&lt;br&gt;&lt;br&gt;
+        ///        Issue Repository Name: &lt;input type=&quot;tex [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string request {
             get {

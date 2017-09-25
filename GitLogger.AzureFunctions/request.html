@@ -8,8 +8,16 @@
 <body>
     <h1><a href="https://github.com/mishra14/GitLogger">GitLogger</a></h1>
     <form action="/api/request">
-        Commit SHA: <input type="text" name="commitSha"><br><br>
-        Repository Name:  <input type="text" name="repoName" value="nuget/nuget.client"><br><br>
+        Start Commit SHA: <input type="text" name="startCommitSha"><br><br>
+        Code Repository Name: <input type="text" name="codeRepoName" value="NuGet/NuGet.Client"><br><br>
+        Issue Repository Name: <input type="text" name="issueRepoName" value="NuGet/Home"><br><br>
+        Output Format: 
+        <select name="outputFormat">
+            <option value="HTML">HTML</option>
+            <option value="CSV">CSV</option>
+        </select>
+        <br><br>
+
         <input type="submit" value="Submit"><br><br>
     </form>
 </body>

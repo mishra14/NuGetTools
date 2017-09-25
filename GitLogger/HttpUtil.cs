@@ -58,7 +58,8 @@ namespace GitLogger.Library
         }
 
         public static void UpdateWithMetadata(
-            string repository,
+            string codeRepository,
+            string issueRepository,
             IList<Commit> commits,
             Tuple<string, string> clientDetails)
         {
@@ -73,7 +74,7 @@ namespace GitLogger.Library
 
             while (commitLookUp.Count > 0)
             {
-                var uri = githubApiUri + $"{repository}/pulls?state=all&per_page=100&page={page++}";
+                var uri = githubApiUri + $"{codeRepository}/pulls?state=all&per_page=100&page={page++}";
 
                 var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
 
@@ -93,7 +94,7 @@ namespace GitLogger.Library
                     // If the sha is in the look up, then get more info
                     if (!string.IsNullOrEmpty(commitSha) && commitLookUp.TryGetValue(commitSha, out var commit))
                     {
-                        UpdateWithMetadataFromJToken(entry, commit);
+                        UpdateWithMetadataFromJToken(entry, commit, issueRepository);
 
                         commitLookUp.Remove(commit.Sha);
 
@@ -106,7 +107,7 @@ namespace GitLogger.Library
             }
         }
 
-        private static void UpdateWithMetadataFromJToken(JToken entry, Commit commit)
+        private static void UpdateWithMetadataFromJToken(JToken entry, Commit commit, string issueRepository)
         {
             // Get PR data
             var prUrl = entry.Value<string>("html_url");
@@ -119,7 +120,7 @@ namespace GitLogger.Library
 
             // Get body and issue data
             var body = entry.Value<string>("body");
-            var issueUrls = GetLinks(body);
+            var issueUrls = GetLinks(body, issueRepository);
 
             if (issueUrls.Count() > 1)
             {
@@ -156,7 +157,7 @@ namespace GitLogger.Library
         }
 
         // Source - https://stackoverflow.com/questions/9125016/get-url-from-a-text
-        public static List<string> GetLinks(string message)
+        public static List<string> GetLinks(string message, string issueRepository)
         {
             List<string> list = new List<string>();
             Regex urlRx = new Regex(@"((https?|ftp|file)\://|www.)[A-Za-z0-9\.\-]+(/[A-Za-z0-9\?\&\=;\+!'\(\)\*\-\._~%]*)*", 
@@ -166,8 +167,8 @@ namespace GitLogger.Library
             foreach (Match match in matches)
             {
                 var url = match.Value.ToLowerInvariant();
-                if (url.Contains("nuget") &&
-                    url.Contains("home") &&
+                var repo = issueRepository.ToLowerInvariant();
+                if (url.Contains(repo) &&
                     url.Contains("issues"))
                 {
                     if (Regex.IsMatch(url, @"[\D]*$"))

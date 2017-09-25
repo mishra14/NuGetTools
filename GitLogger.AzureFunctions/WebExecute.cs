@@ -7,68 +7,65 @@ using Microsoft.Azure.WebJobs.Host;
 using System.Net.Http.Headers;
 using System.IO;
 using GitLogger.Library;
+using System;
 
 namespace GitLogger.AzureFunctions
 {
     public static class WebExecute
     {
+        private const string _htmlResultFileName = "result.html";
+        private const string _csvResultFileName = "result.csv";
 
         [FunctionName("WebExecute")]
         public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "request")]HttpRequestMessage req, TraceWriter log)
         {
-            log.Info("GitLogger: C# HTTP trigger function processed a request.");
+            log.Info("GitLogger: C# HTTP trigger function 'WebExecute' processed a request.");
             var response = req.CreateResponse();
 
 
             if (req.Method == HttpMethod.Get)
             {                
-                var repository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "repoName").Value;
-                var commitSha = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "commitSha").Value;
+                var codeRepository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "codeRepoName").Value;
+                var issueRepository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "issueRepoName").Value;
+                var startCommitSha = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "startCommitSha").Value;
+                var outputFormat = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "outputFormat").Value;
 
-                if (string.IsNullOrEmpty(repository) || string.IsNullOrEmpty(commitSha))
+                if (string.IsNullOrEmpty(startCommitSha))
                 {
                     response.StatusCode = HttpStatusCode.OK;
                     response.Content = new StringContent(html.request);
                     response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                 }
+                else if (!string.IsNullOrEmpty(startCommitSha) && 
+                    (string.IsNullOrEmpty(codeRepository) || string.IsNullOrEmpty(outputFormat)))
+                {
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Content = new StringContent(html.inputError);
+                    response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+                }
                 else
                 {
-                    log.Info($"GitLogger: Collecting commit details for repository '{repository}' from commit '{commitSha}'.");
+                    log.Info($"GitLogger: Collecting commit details for repository '{codeRepository}' from commit '{startCommitSha}'.");
 
-                    var clientDetails = AzureUtil.GetAppCredentials();
+                    var clientDetails = GetAppCredentials(log);
 
-                    if (string.IsNullOrEmpty(repository) || string.IsNullOrEmpty(commitSha))
+                    issueRepository = ValidateAndPopulateIssueRepo(log, codeRepository, issueRepository);
+
+                    try
                     {
-                        log.Info($"GitLogger: Unable to read gitlogger app credentials.");
-                        response.StatusCode = HttpStatusCode.ExpectationFailed;
+
+                        var commits = HttpUtil.GetCommits(codeRepository, startCommitSha, clientDetails);
+                        HttpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
+                        GenerateOutputFile(outputFormat, commits, out string resultFilePath, out string responseFileName);
+                        GenerateResponseFromOutputFile(response, resultFilePath, responseFileName);
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error($"GitLogger: Exception while generating result - {e.Message}");
+                        log.Verbose($"GitLogger: {e}");
+                        response.StatusCode = HttpStatusCode.InternalServerError;
                         response.Content = new StringContent(html.error);
                         response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
-                    }
-                    else
-                    {
-                        log.Info($"GitLogger: Gitlogger credentials read as client Id: '{clientDetails.Item1}' and clientSecret: '{clientDetails.Item2}'");
-
-                        var commits = HttpUtil.GetCommits(repository, commitSha, clientDetails);
-                        HttpUtil.UpdateWithMetadata(repository, commits, clientDetails);
-
-                        // Generate temp file to hold the result.
-                        var resultFilePath = Path.GetTempFileName();
-
-                        // Using CSV as interop excel package does not work on an azure function
-                        var responseFileName = "result.html";
-                        FileUtil.SaveAsHtml(commits, resultFilePath);
-
-                        var stream = new FileStream(resultFilePath, FileMode.Open);
-
-                        response.StatusCode = HttpStatusCode.OK;
-                        response.Content = new StreamContent(stream);
-                        response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-                        {
-                            FileName = responseFileName
-                        };
-
-                        response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                        response.Content.Headers.ContentLength = stream.Length;
                     }
                 }
             }
@@ -80,6 +77,67 @@ namespace GitLogger.AzureFunctions
             }
 
             return response;
+        }
+
+        private static string ValidateAndPopulateIssueRepo(TraceWriter log, string codeRepository, string issueRepository)
+        {
+            if (string.IsNullOrEmpty(issueRepository))
+            {
+                log.Warning($"GitLogger: No issue repository provided. Using code repository for issues.");
+                issueRepository = codeRepository;
+            }
+
+            return issueRepository;
+        }
+
+        private static Tuple<string, string> GetAppCredentials(TraceWriter log)
+        {
+            var clientDetails = AzureUtil.GetAppCredentials();
+
+            if (string.IsNullOrEmpty(clientDetails.Item1) || string.IsNullOrEmpty(clientDetails.Item2))
+            {
+                log.Warning($"GitLogger: Unable to read gitlogger app credentials...");
+            }
+            else
+            {
+                log.Info($"GitLogger: Gitlogger credentials read as client Id: '{clientDetails.Item1}' and clientSecret: '{clientDetails.Item2}'");
+            }
+
+            return clientDetails;
+        }
+
+        private static void GenerateResponseFromOutputFile(HttpResponseMessage response, string resultFilePath, string responseFileName)
+        {
+            var stream = new FileStream(resultFilePath, FileMode.Open);
+            response.StatusCode = HttpStatusCode.OK;
+            response.Content = new StreamContent(stream);
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+            {
+                FileName = responseFileName
+            };
+
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            response.Content.Headers.ContentLength = stream.Length;
+        }
+
+        private static void GenerateOutputFile(string outputFormat, System.Collections.Generic.IList<Commit> commits, out string resultFilePath, out string responseFileName)
+        {
+            // Generate temp file to hold the result.
+            resultFilePath = Path.GetTempFileName();
+            responseFileName = string.Empty;
+            switch (outputFormat)
+            {
+                case "CSV":
+                    // Using CSV as interop excel package does not work on an azure function
+                    responseFileName = _csvResultFileName;
+                    FileUtil.SaveAsCsv(commits, resultFilePath);
+                    break;
+                default:
+                case "HTML":
+                    responseFileName = _htmlResultFileName;
+                    FileUtil.SaveAsHtml(commits, resultFilePath);
+                    break;
+            }
         }
     }
 }
