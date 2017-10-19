@@ -26,6 +26,7 @@ namespace GitLogger.AzureFunctions
             if (req.Method == HttpMethod.Get)
             {                
                 var codeRepository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "codeRepoName").Value;
+                var branchName = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "branchName").Value;
                 var issueRepository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "issueRepoName").Value;
                 var startCommitSha = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "startCommitSha").Value;
                 var outputFormat = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "outputFormat").Value;
@@ -54,7 +55,7 @@ namespace GitLogger.AzureFunctions
                     try
                     {
 
-                        var commits = HttpUtil.GetCommits(codeRepository, startCommitSha, clientDetails);
+                        var commits = HttpUtil.GetCommits(codeRepository, branchName, startCommitSha, clientDetails);
                         HttpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
                         GenerateOutputFile(outputFormat, commits, out string resultFilePath, out string responseFileName);
                         GenerateResponseFromOutputFile(response, resultFilePath, responseFileName);

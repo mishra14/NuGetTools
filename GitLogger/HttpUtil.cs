@@ -20,6 +20,7 @@ namespace GitLogger.Library
 
         public static IList<Commit> GetCommits(
             string repository,
+            string branch,
             string startSha,
             Tuple<string, string> clientDetails)
         {
@@ -30,7 +31,7 @@ namespace GitLogger.Library
 
             while (!done)
             {
-                var uri = githubApiUri + $"{repository}/commits?per_page=100&page={page++}";
+                var uri = githubApiUri + $"{repository}/commits?sha={branch}&per_page=100&page={page++}";
 
                 var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
 
