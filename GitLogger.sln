@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.AzureFunctions", "GitLogger.AzureFunctions\GitLogger.AzureFunctions.csproj", "{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.App", "GitLogger.App\GitLogger.App.csproj", "{D20C7050-8392-4B88-9667-E47467030B1B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.Library", "GitLogger.Library\GitLogger.Library.csproj", "{D368A531-CC03-41E2-9E97-FC61540E999D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuGetTools.AzureFunctions", "NuGetTools.AzureFunctions\NuGetTools.AzureFunctions.csproj", "{DF27E327-4703-4848-8E14-591B7A05E090}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,10 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD1D675E-39F4-4AD4-B7C3-54696BEBD95B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D20C7050-8392-4B88-9667-E47467030B1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D20C7050-8392-4B88-9667-E47467030B1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D20C7050-8392-4B88-9667-E47467030B1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -27,6 +23,10 @@ Global
 		{D368A531-CC03-41E2-9E97-FC61540E999D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D368A531-CC03-41E2-9E97-FC61540E999D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D368A531-CC03-41E2-9E97-FC61540E999D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF27E327-4703-4848-8E14-591B7A05E090}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF27E327-4703-4848-8E14-591B7A05E090}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF27E327-4703-4848-8E14-591B7A05E090}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF27E327-4703-4848-8E14-591B7A05E090}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
