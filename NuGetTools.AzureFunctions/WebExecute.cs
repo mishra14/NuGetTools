@@ -9,7 +9,7 @@ using System.IO;
 using GitLogger.Library;
 using System;
 
-namespace GitLogger.AzureFunctions
+namespace NuGetTools.AzureFunctions
 {
     public static class WebExecute
     {

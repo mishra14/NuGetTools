@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace GitLogger.AzureFunctions {
+namespace NuGetTools.AzureFunctions {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace GitLogger.AzureFunctions {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("GitLogger.AzureFunctions.html", typeof(html).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NuGetTools.AzureFunctions.html", typeof(html).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -121,7 +121,7 @@ namespace GitLogger.AzureFunctions {
         ///    &lt;form action=&quot;/api/request&quot;&gt;
         ///        Start Commit SHA: &lt;input type=&quot;text&quot; name=&quot;startCommitSha&quot;&gt;&lt;br&gt;&lt;br&gt;
         ///        Code Repository Name: &lt;input type=&quot;text&quot; name=&quot;codeRepoName&quot; value=&quot;NuGet/NuGet.Client&quot;&gt;&lt;br&gt;&lt;br&gt;
-        ///        Issue Repository Name: &lt;input type=&quot;tex [rest of string was truncated]&quot;;.
+        ///        Code Branch Name: &lt;input type=&quot;text&quot; na [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string request {
             get {
