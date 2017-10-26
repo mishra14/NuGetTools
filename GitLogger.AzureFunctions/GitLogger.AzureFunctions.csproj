@@ -6,7 +6,7 @@
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GitLogger\GitLogger.Library.csproj" />
+    <ProjectReference Include="..\GitLogger.Library\GitLogger.Library.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

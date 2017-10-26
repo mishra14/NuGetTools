@@ -9,7 +9,9 @@ namespace GitLogger.App
         static void Main(string[] args)
         {
             var startSha = "313a378dbdee355ced26c9501753c1a167286fbf";
-            var repository = "nuget/nuget.client";
+            var codeRepository = "NuGet/NuGet.Client";
+            var branchName = "dev";
+            var issueRepository = "NuGet/Home";
             var useCache = false;
 
             var logFolder = @"F:\validation\GitLogger\logs";
@@ -19,12 +21,12 @@ namespace GitLogger.App
 
             FileUtil.ClearLogFiles(resultCsvPath, resultExcelPath, cachePath, useCache);
 
-            Console.WriteLine($"GitLogger: Collecting commit details for repository '{repository}' from commit '{startSha}'");
+            Console.WriteLine($"GitLogger: Collecting commit details for repository '{codeRepository}' from commit '{startSha}'");
 
             var clientDetails = FileUtil.GetAppCredentials(Path.Combine(logFolder, "clientcredentials.txt"));
 
-            var commits = HttpUtil.GetCommits(repository, startSha, clientDetails);
-            HttpUtil.UpdateWithMetadata(repository, commits, clientDetails);
+            var commits = HttpUtil.GetCommits(codeRepository, branchName, startSha, clientDetails);
+            HttpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
 
             FileUtil.SaveAsCsv(commits, resultCsvPath);
             FileUtil.SaveAsExcel(commits, resultExcelPath);

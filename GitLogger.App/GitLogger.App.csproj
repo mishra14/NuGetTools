@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GitLogger\GitLogger.Library.csproj" />
+    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <ProjectReference Include="..\GitLogger.Library\GitLogger.Library.csproj" />
   </ItemGroup>
   
 </Project>
