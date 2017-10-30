@@ -118,19 +118,25 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="error" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>error.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="gitLoggerError" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>gitLoggerError.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="inputError" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>inputError.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="gitLoggerInputError" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>gitLoggerInputError.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="request" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>request.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="gitLoggerRequest" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>gitLoggerRequest.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="response" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>response.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="gitLoggerResponse" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>gitLoggerResponse.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="unsupported" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>unsupported.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  <data name="gitLoggerUnsupported" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>gitLoggerUnsupported.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="home" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>home.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="nugetStatusRequest" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>nugetStatusRequest.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>

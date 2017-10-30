@@ -6,19 +6,15 @@
     <title>GitLogger Invalid Input Page</title>
 </head>
 <body>
-    <h1><a href="https://github.com/mishra14/GitLogger">GitLogger</a></h1>
+    <h1><a href="https://github.com/mishra14/NuGetTools">NuGetTools - GitLogger</a></h1>
 
     Invalid request. Please provide the following inputs: <br/><br/>
-    
     Start Commit SHA: The commit sha for the starting commit to be used while generating logs.<br /><br />
-
     Code Repository: Github code repository name in the format - Owner/Repo. <br /><br />
-
     Issue Repository: Github issue repository name in the format - Owner/Repo. <br /><br />
-
     Output Format: Select an output format from the drop down menu. <br /><br />
 
-    <form action="/api/request">
+    <form action="/api/gitlogger/request">
         <input type="submit" value="Return"><br><br>
     </form>
 </body>
