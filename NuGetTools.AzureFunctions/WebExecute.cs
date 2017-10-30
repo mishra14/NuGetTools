@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using Microsoft.Azure.WebJobs;
@@ -8,18 +7,19 @@ using System.Net.Http.Headers;
 using System.IO;
 using GitLogger.Library;
 using System;
+using System.Linq;
 
 namespace NuGetTools.AzureFunctions
 {
-    public static class WebExecute
+    public static class GitLoggerWebExecute
     {
         private const string _htmlResultFileName = "result.html";
         private const string _csvResultFileName = "result.csv";
 
-        [FunctionName("WebExecute")]
-        public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "request")]HttpRequestMessage req, TraceWriter log)
+        [FunctionName("GitLoggerWebExecute")]
+        public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "gitlogger/request")]HttpRequestMessage req, TraceWriter log)
         {
-            log.Info("GitLogger: C# HTTP trigger function 'WebExecute' processed a request.");
+            log.Info("GitLogger: C# HTTP trigger function 'GitLoggerWebExecute' processed a request.");
             var response = req.CreateResponse();
 
 
@@ -34,14 +34,14 @@ namespace NuGetTools.AzureFunctions
                 if (string.IsNullOrEmpty(startCommitSha))
                 {
                     response.StatusCode = HttpStatusCode.OK;
-                    response.Content = new StringContent(html.request);
+                    response.Content = new StringContent(html.gitLoggerRequest);
                     response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                 }
                 else if (!string.IsNullOrEmpty(startCommitSha) && 
                     (string.IsNullOrEmpty(codeRepository) || string.IsNullOrEmpty(outputFormat)))
                 {
                     response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Content = new StringContent(html.inputError);
+                    response.Content = new StringContent(html.gitLoggerInputError);
                     response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                 }
                 else
@@ -65,7 +65,7 @@ namespace NuGetTools.AzureFunctions
                         log.Error($"GitLogger: Exception while generating result - {e.Message}");
                         log.Verbose($"GitLogger: {e}");
                         response.StatusCode = HttpStatusCode.InternalServerError;
-                        response.Content = new StringContent(html.error);
+                        response.Content = new StringContent(html.gitLoggerError);
                         response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
                     }
                 }
@@ -73,12 +73,13 @@ namespace NuGetTools.AzureFunctions
             else
             {
                 response.StatusCode = HttpStatusCode.BadRequest;
-                response.Content = new StringContent(html.unsupported);
+                response.Content = new StringContent(html.gitLoggerUnsupported);
                 response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
             }
 
             return response;
         }
+
 
         private static string ValidateAndPopulateIssueRepo(TraceWriter log, string codeRepository, string issueRepository)
         {
@@ -139,6 +140,70 @@ namespace NuGetTools.AzureFunctions
                     FileUtil.SaveAsHtml(commits, resultFilePath);
                     break;
             }
+        }
+    }
+
+    /// <summary>
+    /// For getting NuGet Status
+    /// </summary>
+    public static class NuGetStatusWebExecute
+    {
+        private const string _htmlResultFileName = "result.html";
+        private const string _csvResultFileName = "result.csv";
+
+        [FunctionName("NuGetStatusWebExecute")]
+        public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "status/request")]HttpRequestMessage req, TraceWriter log)
+        {
+            log.Info("GitLogger: C# HTTP trigger function 'NuGetStatusWebExecute' processed a request.");
+            var response = req.CreateResponse();
+
+
+            if (req.Method == HttpMethod.Get)
+            {
+                response.StatusCode = HttpStatusCode.OK;
+                response.Content = new StringContent(html.nugetStatusRequest);
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+            }
+            else
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent(html.gitLoggerUnsupported);
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+            }
+
+            return response;
+        }
+    }
+
+    /// <summary>
+    /// Home Page
+    /// </summary>
+    public static class HomeWebExecute
+    {
+        private const string _htmlResultFileName = "result.html";
+        private const string _csvResultFileName = "result.csv";
+
+        [FunctionName("HomeWebExecute")]
+        public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "home")]HttpRequestMessage req, TraceWriter log)
+        {
+            log.Info("GitLogger: C# HTTP trigger function 'HomeWebExecute' processed a request.");
+            var response = req.CreateResponse();
+
+
+            if (req.Method == HttpMethod.Get)
+            {
+                response.StatusCode = HttpStatusCode.OK;
+                response.Content = new StringContent(html.home);
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+            }
+            else
+            {
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Content = new StringContent(html.gitLoggerUnsupported);
+                response.Content.Headers.ContentType = new MediaTypeHeaderValue("text/html");
+            }
+
+            return response;
         }
     }
 }

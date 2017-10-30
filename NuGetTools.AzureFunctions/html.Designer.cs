@@ -66,22 +66,22 @@ namespace NuGetTools.AzureFunctions {
         ///&lt;html lang=&quot;en&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
         ///&lt;head&gt;
         ///    &lt;meta charset=&quot;utf-8&quot; /&gt;
-        ///    &lt;title&gt;GitLogger Error Page&lt;/title&gt;
+        ///    &lt;title&gt;Error Page&lt;/title&gt;
         ///&lt;/head&gt;
         ///&lt;body&gt;
-        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGetTools&lt;/a&gt;&lt;/h1&gt;
         ///
         ///    Error while generating the git logs.
         ///
-        ///    &lt;form action=&quot;/api/request&quot;&gt;
+        ///    &lt;form action=&quot;/api/gitlogger/request&quot;&gt;
         ///        &lt;input type=&quot;submit&quot; value=&quot;Return&quot;&gt;&lt;br&gt;&lt;br&gt;
         ///    &lt;/form&gt;
         ///&lt;/body&gt;
         ///&lt;/html&gt;.
         /// </summary>
-        internal static string error {
+        internal static string gitLoggerError {
             get {
-                return ResourceManager.GetString("error", resourceCulture);
+                return ResourceManager.GetString("gitLoggerError", resourceCulture);
             }
         }
         
@@ -94,17 +94,15 @@ namespace NuGetTools.AzureFunctions {
         ///    &lt;title&gt;GitLogger Invalid Input Page&lt;/title&gt;
         ///&lt;/head&gt;
         ///&lt;body&gt;
-        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGetTools - GitLogger&lt;/a&gt;&lt;/h1&gt;
         ///
         ///    Invalid request. Please provide the following inputs: &lt;br/&gt;&lt;br/&gt;
-        ///    
         ///    Start Commit SHA: The commit sha for the starting commit to be used while generating logs.&lt;br /&gt;&lt;br /&gt;
-        ///
-        ///    Code Repository: Github code repository name in the format - Owner [rest of string was truncated]&quot;;.
+        ///    Code Repository: Github code repository name in the format - [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string inputError {
+        internal static string gitLoggerInputError {
             get {
-                return ResourceManager.GetString("inputError", resourceCulture);
+                return ResourceManager.GetString("gitLoggerInputError", resourceCulture);
             }
         }
         
@@ -117,15 +115,15 @@ namespace NuGetTools.AzureFunctions {
         ///    &lt;title&gt;GitLogger Request Page&lt;/title&gt;
         ///&lt;/head&gt;
         ///&lt;body&gt;
-        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
-        ///    &lt;form action=&quot;/api/request&quot;&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGetTools - GitLogger&lt;/a&gt;&lt;/h1&gt;
+        ///    &lt;form action=&quot;/api/gitlogger/request&quot;&gt;
         ///        Start Commit SHA: &lt;input type=&quot;text&quot; name=&quot;startCommitSha&quot;&gt;&lt;br&gt;&lt;br&gt;
         ///        Code Repository Name: &lt;input type=&quot;text&quot; name=&quot;codeRepoName&quot; value=&quot;NuGet/NuGet.Client&quot;&gt;&lt;br&gt;&lt;br&gt;
-        ///        Code Branch Name: &lt;input type=&quot;text&quot; na [rest of string was truncated]&quot;;.
+        ///        Code Branch Nam [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string request {
+        internal static string gitLoggerRequest {
             get {
-                return ResourceManager.GetString("request", resourceCulture);
+                return ResourceManager.GetString("gitLoggerRequest", resourceCulture);
             }
         }
         
@@ -138,19 +136,19 @@ namespace NuGetTools.AzureFunctions {
         ///    &lt;title&gt;GitLogger Response Page&lt;/title&gt;
         ///&lt;/head&gt;
         ///&lt;body&gt;
-        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGetTools - GitLogger&lt;/a&gt;&lt;/h1&gt;
         ///
         ///    Successfully generated git logs. The file is attached with the response.
         ///
-        ///    &lt;form action=&quot;/api/request&quot;&gt;
+        ///    &lt;form action=&quot;/api/gitlogger/request&quot;&gt;
         ///        &lt;input type=&quot;submit&quot; value=&quot;Return&quot;&gt;&lt;br&gt;&lt;br&gt;
         ///    &lt;/form&gt;
         ///&lt;/body&gt;
         ///&lt;/html&gt;.
         /// </summary>
-        internal static string response {
+        internal static string gitLoggerResponse {
             get {
-                return ResourceManager.GetString("response", resourceCulture);
+                return ResourceManager.GetString("gitLoggerResponse", resourceCulture);
             }
         }
         
@@ -163,19 +161,62 @@ namespace NuGetTools.AzureFunctions {
         ///    &lt;title&gt;GitLogger Unsupported Page&lt;/title&gt;
         ///&lt;/head&gt;
         ///&lt;body&gt;
-        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/GitLogger&quot;&gt;GitLogger&lt;/a&gt;&lt;/h1&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGetTools&lt;/a&gt;&lt;/h1&gt;
         ///
         ///    Invalid request. This azure function only supports GET requests.
         ///
-        ///    &lt;form action=&quot;/api/request&quot;&gt;
+        ///    &lt;form action=&quot;/&quot;&gt;
         ///        &lt;input type=&quot;submit&quot; value=&quot;Return&quot;&gt;&lt;br&gt;&lt;br&gt;
         ///    &lt;/form&gt;
         ///&lt;/body&gt;
         ///&lt;/html&gt;.
         /// </summary>
-        internal static string unsupported {
+        internal static string gitLoggerUnsupported {
             get {
-                return ResourceManager.GetString("unsupported", resourceCulture);
+                return ResourceManager.GetString("gitLoggerUnsupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;!DOCTYPE html&gt;
+        ///
+        ///&lt;html lang=&quot;en&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+        ///&lt;head&gt;
+        ///    &lt;meta charset=&quot;utf-8&quot; /&gt;
+        ///    &lt;title&gt;NuGet Tools Home&lt;/title&gt;
+        ///&lt;/head&gt;
+        ///&lt;body&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGet Tools&lt;/a&gt;&lt;/h1&gt; &lt;br /&gt;
+        ///        Home page to NuGet Tools - Ankit Mishra &lt;br /&gt;
+        ///        1. &lt;a href=&quot;/api/gitlogger/request&quot;&gt;GitLogger&lt;/a&gt; &lt;br /&gt;
+        ///        2. &lt;a href=&quot;/api/status/request&quot;&gt;NuGetStatus&lt;/a&gt; &lt;br /&gt;
+        ///&lt;/body&gt;
+        ///&lt;/html&gt;.
+        /// </summary>
+        internal static string home {
+            get {
+                return ResourceManager.GetString("home", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;!DOCTYPE html&gt;
+        ///
+        ///&lt;html lang=&quot;en&quot; xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;
+        ///&lt;head&gt;
+        ///    &lt;meta charset=&quot;utf-8&quot; /&gt;
+        ///    &lt;title&gt;NuGetStatus Request Page&lt;/title&gt;
+        ///&lt;/head&gt;
+        ///&lt;body&gt;
+        ///    &lt;h1&gt;&lt;a href=&quot;https://github.com/mishra14/NuGetTools&quot;&gt;NuGetTools - NuGetStatus&lt;/a&gt;&lt;/h1&gt;
+        ///
+        ///    Dev branch last build - https://devdiv.visualstudio.com/DevDiv/_build?_a=completed&amp;definitionId=5868
+        ///&lt;/body&gt;
+        ///&lt;/html&gt;.
+        /// </summary>
+        internal static string nugetStatusRequest {
+            get {
+                return ResourceManager.GetString("nugetStatusRequest", resourceCulture);
             }
         }
     }
