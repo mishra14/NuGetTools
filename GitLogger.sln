@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27120.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.App", "GitLogger.App\GitLogger.App.csproj", "{D20C7050-8392-4B88-9667-E47467030B1B}"
 EndProject
@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GitLogger.Library", "GitLog
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuGetTools.AzureFunctions", "NuGetTools.AzureFunctions\NuGetTools.AzureFunctions.csproj", "{DF27E327-4703-4848-8E14-591B7A05E090}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGetStatus.Library", "NuGetStatus.Library\NuGetStatus.Library.csproj", "{4DAE7452-8F83-4C2D-8995-C3A18F07EC49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuGetStatus.Library", "NuGetStatus.Library\NuGetStatus.Library.csproj", "{4DAE7452-8F83-4C2D-8995-C3A18F07EC49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGetStatus.App", "NuGetStatus.App\NuGetStatus.App.csproj", "{D01A5B12-7AEF-4660-BF0A-0EACF4DDCAB2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{4DAE7452-8F83-4C2D-8995-C3A18F07EC49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DAE7452-8F83-4C2D-8995-C3A18F07EC49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4DAE7452-8F83-4C2D-8995-C3A18F07EC49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D01A5B12-7AEF-4660-BF0A-0EACF4DDCAB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D01A5B12-7AEF-4660-BF0A-0EACF4DDCAB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D01A5B12-7AEF-4660-BF0A-0EACF4DDCAB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D01A5B12-7AEF-4660-BF0A-0EACF4DDCAB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

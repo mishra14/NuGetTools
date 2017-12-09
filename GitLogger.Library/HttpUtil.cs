@@ -185,6 +185,8 @@ namespace GitLogger.Library
             return list;
         }
 
+
+        // Not used since an API key was added which increases the limit on api calls
         public static string GetCachedOrHttpResponse(
             string uri,
             string cachePath,
