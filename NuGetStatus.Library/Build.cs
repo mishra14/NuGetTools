@@ -19,5 +19,8 @@ namespace NuGetStatus.Library
         public string SourceCommit { get; set; }
 
         public string SourceBranch { get; set; }
+
+        public BuildDefinition BuildDefinition { get; set; }
+
     }
 }

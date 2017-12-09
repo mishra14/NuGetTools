@@ -14,7 +14,7 @@ namespace NuGetStatus.Library
 
         public ReleaseDefinition ReleaseDefinition { get; set; }
 
-        public Project Project { get; set; }
+        public Build Build { get; set; }
 
         public Links Links { get; set; }
     }
