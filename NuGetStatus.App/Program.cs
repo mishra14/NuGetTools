@@ -19,6 +19,9 @@ namespace NuGetStatus.App
 
             var latestBuild = VSTSUtil.GetLatestBuildAsync(definition).Result;
 
+            var release = VSTSUtil.GetReleaseAsync(latestBuild).Result;
+
+            // go to release.links.self to get all the environments
         }
     }
 }

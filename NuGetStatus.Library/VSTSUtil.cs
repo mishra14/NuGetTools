@@ -59,7 +59,25 @@ namespace NuGetStatus.Library
                 BuildNumber = GetBuildNumber(buildJson),
                 Status = GetStatus(buildJson),
                 Links = GetLinks(buildJson),
+                BuildDefinition = definition
+            };
+        }
 
+        public static async Task<Release> GetReleaseAsync(Build build)
+        {
+            var url = $@"{Url.DevDivReleaseUrl}/{Constants.Apis}/{Constants.Release}/{Constants.Releases}?{Constants.ArtifactTypeId}={Constants.Build}&{Constants.ArtifactVersionId}={build.Id}&{Constants.SourceId}={build.BuildDefinition.Project.Id}:{build.BuildDefinition.Id}";
+
+            var response = await GetJsonResponseAsync(url);
+
+            var releaseJson = response[Constants.Value]?.Value<JArray>()[0];
+
+            return new Release()
+            {
+                Id = GetId(releaseJson),
+                Status = GetStatus(releaseJson),
+                Links = GetLinks(releaseJson),
+                Name = GetName(releaseJson),
+                Build = build
             };
         }
 

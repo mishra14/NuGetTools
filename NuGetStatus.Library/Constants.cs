@@ -26,6 +26,10 @@ namespace NuGetStatus.Library
 
         public const string Builds = "builds";
 
+        public const string Release = "release";
+
+        public const string Releases = "releases";
+
         public const string Definitions = "definitions";
 
         public const string Self = "self";
@@ -47,6 +51,12 @@ namespace NuGetStatus.Library
         public const string BuildNumber = "buildNumber";
 
         public const string Status = "status";
+
+        public const string SourceId = "sourceId";
+
+        public const string ArtifactVersionId = "artifactVersionId";
+
+        public const string ArtifactTypeId = "artifactTypeId";
 
     }
 }
