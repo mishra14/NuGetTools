@@ -13,15 +13,17 @@ namespace NuGetStatus.App
                 Name = Constants.DevDiv
             };
 
-            var definitionId = Constants.NuGetOfficialBuildDefinitionId;
+            var definitionId = Constants.NuGetOfficialYamlBuildDefinitionId;
 
             var definition = VSTSUtil.GetBuildDefintionAsync(project, definitionId).Result;
 
             var latestBuild = VSTSUtil.GetLatestBuildAsync(definition).Result;
 
-            var release = VSTSUtil.GetReleaseAsync(latestBuild).Result;
+            if (latestBuild != null)
+            {
+                latestBuild.PopulateTimeLine().Wait();
+            }
 
-            // go to release.links.self to get all the environments
         }
     }
 }

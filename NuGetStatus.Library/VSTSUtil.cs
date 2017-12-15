@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -25,7 +26,7 @@ namespace NuGetStatus.Library
         // environments for that release
         // release definition api - https://devdiv.vsrm.visualstudio.com/{projectIdGuid}/_apis/Release/releases/{releaseId}
         // release definition api example - https://devdiv.vsrm.visualstudio.com/0bdbc590-a062-4c3f-b0f6-9383f67865ee/_apis/Release/releases/64073
-        
+
         // read VSTS Personal Access Token from environment variables
         private static string VstsPat = Environment.GetEnvironmentVariable(Constants.VstsPatEnvVarName);
 
@@ -34,14 +35,14 @@ namespace NuGetStatus.Library
         {
             var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Definitions}/{buildDefinitionId}";
 
-            var response = await GetJsonResponseAsync(url);
+            var json = await GetJsonResponseAsync(url);
 
             return new BuildDefinition()
             {
                 Id = buildDefinitionId,
-                Name = GetName(response),
+                Name = GetString(json, Constants.Name),
                 Project = project,
-                Links = GetLinks(response)
+                Links = GetLinks(json)
             };
         }
 
@@ -50,17 +51,121 @@ namespace NuGetStatus.Library
             var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}?{Constants.Definitions}={definition.Id}&{Constants.StatusFilter}={Status.Completed.ToString()}&${Constants.Top}=1";
 
             var response = await GetJsonResponseAsync(url);
-
-            var buildJson = response[Constants.Value]?.Value<JArray>()[0];
+            var json = response[Constants.Value]?.Value<JArray>()[0];
 
             return new Build()
             {
-                Id = GetId(buildJson),
-                BuildNumber = GetBuildNumber(buildJson),
-                Status = GetStatus(buildJson),
-                Links = GetLinks(buildJson),
+                Id = GetInt(json, Constants.Id),
+                BuildNumber = GetInt(json, Constants.BuildNumber),
+                Status = GetEnum<Status>(json, Constants.Status),
+                Result = GetEnum<Result>(json, Constants.Result),
+                Links = GetLinks(json),
+                SourceBranch = GetString(json, Constants.SourceBranch),
+                SourceCommit = GetString(json, Constants.SourceVersion),
                 BuildDefinition = definition
             };
+        }
+
+        public static async Task<IList<TimelineRecord>> GetBuildTimelineRecordsAsync(Build build)
+        {
+            var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{build.BuildDefinition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}/{build.Id}/{Constants.Timeline}";
+
+            var response = await GetJsonResponseAsync(url);
+            var recordsArray = response[Constants.Records]?.Value<JArray>();
+            var records = new List<TimelineRecord>();
+
+            if (recordsArray != null && recordsArray.HasValues)
+            {
+                foreach (var json in recordsArray)
+                {
+                    var timelineRecord = new TimelineRecord
+                    {
+                        Id = GetString(json, Constants.Id),
+                        ParentId = GetString(json, Constants.ParentId),
+                        Type = GetString(json, Constants.Type),
+                        Name = GetString(json, Constants.Name),
+                        Status = GetEnum<Status>(json, Constants.State),
+                        Result = GetEnum<Result>(json, Constants.Result),
+                        WarningCount = GetInt(json, Constants.WarningCount),
+                        ErrorCount = GetInt(json, Constants.ErrorCount),
+                        Log = GetLog(json),
+                        Issues = GetIssues(json)
+                    };
+
+                    records.Add(timelineRecord);
+                }
+            }
+
+            return records;
+        }
+
+        private static IList<Issue> GetIssues(JToken parentJson)
+        {
+            var issuesArray = parentJson[Constants.Issues]?.Value<JArray>();
+            var issues = new List<Issue>();
+
+            if (issuesArray != null && issuesArray.HasValues)
+            {
+                foreach (var json in issuesArray)
+                {
+                    var issue = new Issue()
+                    {
+                        Type = GetString(json, Constants.Type),
+                        Category = GetString(json, Constants.Category),
+                        Message = GetString(json, Constants.Message),
+                        Data = GetData(json),
+                    };
+
+                    issues.Add(issue);
+                }
+            }
+
+            return issues;
+        }
+
+        private static Data GetData(JToken parentJson)
+        {
+            var json = parentJson[Constants.Log];
+            Data data = null;
+
+            if (json != null && json.HasValues)
+            {
+                data = new Data()
+                {
+                    Type = GetString(json, Constants.Type),
+                    SourcePath = GetString(json, Constants.SourcePath),
+                    LineNumber = GetString(json, Constants.LineNumber),
+                    ColumnNumber = GetString(json, Constants.ColumnNumber),
+                    Code = GetString(json, Constants.Code),
+                };
+            }
+
+            return data;
+        }
+
+        private static Log GetLog(JToken parentJson)
+        {
+            var json = parentJson[Constants.Log];
+            Log log = null;
+
+            if (json != null && json.HasValues)
+            {
+                try
+                {
+                    log = new Log()
+                    {
+                        Id = GetInt(json, Constants.Id),
+                        Type = GetString(json, Constants.Type),
+                        Url = GetString(json, Constants.Url)
+                    };
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+
+            return log;
         }
 
         public static async Task<Release> GetReleaseAsync(Build build)
@@ -68,39 +173,33 @@ namespace NuGetStatus.Library
             var url = $@"{Url.DevDivReleaseUrl}/{Constants.Apis}/{Constants.Release}/{Constants.Releases}?{Constants.ArtifactTypeId}={Constants.Build}&{Constants.ArtifactVersionId}={build.Id}&{Constants.SourceId}={build.BuildDefinition.Project.Id}:{build.BuildDefinition.Id}";
 
             var response = await GetJsonResponseAsync(url);
-
-            var releaseJson = response[Constants.Value]?.Value<JArray>()[0];
+            var json = response[Constants.Value]?.Value<JArray>()[0];
 
             return new Release()
             {
-                Id = GetId(releaseJson),
-                Status = GetStatus(releaseJson),
-                Links = GetLinks(releaseJson),
-                Name = GetName(releaseJson),
+                Id = GetInt(json, Constants.Id),
+                Status = GetEnum<Status>(json, Constants.Status),
+                Links = GetLinks(json),
+                Name = GetString(json, Constants.Name),
                 Build = build
             };
         }
 
-        private static Status GetStatus(JToken json)
+        private static TEnum GetEnum<TEnum>(JToken json, string key) where TEnum : struct
         {
-            var statusString =  json[Constants.Status].Value<string>();
+            var statusString = json[key]?.Value<string>();
 
-            return Enum.TryParse(statusString, ignoreCase: true, result: out Status status) ? status : Status.Unknown;
+            return Enum.TryParse(statusString, ignoreCase: true, result: out TEnum result) ? result : default(TEnum);
         }
 
-        private static int GetBuildNumber(JToken json)
+        private static string GetString(JToken json, string key)
         {
-            return json[Constants.BuildNumber].Value<int>();
+            return json[key]?.Value<string>() ?? string.Empty;
         }
 
-        private static int GetId(JToken json)
+        private static int GetInt(JToken json, string key)
         {
-            return json[Constants.Id].Value<int>();
-        }
-
-        private static string GetName(JToken json)
-        {
-            return json[Constants.Name].Value<string>();
+            return json[key]?.Value<int>() ?? -1;
         }
 
         private static Links GetLinks(JToken json)
