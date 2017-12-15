@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace NuGetStatus.Library
 {
@@ -14,7 +15,7 @@ namespace NuGetStatus.Library
 
         public Status Status { get; set; }
 
-        public string Result { get; set; }
+        public Result Result { get; set; }
 
         public string SourceCommit { get; set; }
 
@@ -22,5 +23,11 @@ namespace NuGetStatus.Library
 
         public BuildDefinition BuildDefinition { get; set; }
 
+        public IList<TimelineRecord> TimelineRecords { get; set; }
+
+        public async Task PopulateTimeLine()
+        {
+            TimelineRecords = await VSTSUtil.GetBuildTimelineRecordsAsync(this);
+        }
     }
 }
