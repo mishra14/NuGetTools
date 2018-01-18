@@ -8,6 +8,7 @@ using System.IO;
 using GitLogger.Library;
 using System;
 using System.Linq;
+using NuGetTools.Common;
 
 namespace NuGetTools.AzureFunctions
 {
@@ -54,9 +55,9 @@ namespace NuGetTools.AzureFunctions
 
                     try
                     {
-
-                        var commits = HttpUtil.GetCommits(codeRepository, branchName, startCommitSha, clientDetails);
-                        HttpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
+                        var httpUtil = new HttpUtil(new Logger(log));
+                        var commits = httpUtil.GetCommits(codeRepository, branchName, startCommitSha, clientDetails);
+                        httpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
                         GenerateOutputFile(outputFormat, commits, out string resultFilePath, out string responseFileName);
                         GenerateResponseFromOutputFile(response, resultFilePath, responseFileName);
                     }
@@ -148,15 +149,12 @@ namespace NuGetTools.AzureFunctions
     /// </summary>
     public static class NuGetStatusWebExecute
     {
-        private const string _htmlResultFileName = "result.html";
-        private const string _csvResultFileName = "result.csv";
 
         [FunctionName("NuGetStatusWebExecute")]
         public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "status/request")]HttpRequestMessage req, TraceWriter log)
         {
             log.Info("GitLogger: C# HTTP trigger function 'NuGetStatusWebExecute' processed a request.");
             var response = req.CreateResponse();
-
 
             if (req.Method == HttpMethod.Get)
             {
@@ -180,15 +178,12 @@ namespace NuGetTools.AzureFunctions
     /// </summary>
     public static class HomeWebExecute
     {
-        private const string _htmlResultFileName = "result.html";
-        private const string _csvResultFileName = "result.csv";
 
         [FunctionName("HomeWebExecute")]
         public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "home")]HttpRequestMessage req, TraceWriter log)
         {
             log.Info("GitLogger: C# HTTP trigger function 'HomeWebExecute' processed a request.");
             var response = req.CreateResponse();
-
 
             if (req.Method == HttpMethod.Get)
             {

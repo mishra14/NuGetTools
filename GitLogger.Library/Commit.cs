@@ -8,11 +8,17 @@ namespace GitLogger.Library
     public class Commit
     {
         public string Sha { get; set; }
+
         public string Author { get; set; }
+
         public string Message { get; set; }
+
         public string Link { get; set; }
+
         public ISet<Tuple<int, string>> Issues { get; set; }
+
         public Tuple<int, string> PR { get; set; }
+
         public string SanitizedMessage {
             get
             {
