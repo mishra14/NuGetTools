@@ -1,24 +1,33 @@
 ﻿using Newtonsoft.Json.Linq;
+using NuGetTools.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace GitLogger.Library
 {
-    public static class HttpUtil
+    public class HttpUtil
     {
-        //private static readonly string githubSearchUri = @"https://api.github.com/search/issues";
+        //private  readonly string githubSearchUri = @"https://api.github.com/search/issues";
 
-        private static readonly string githubApiUri = @"https://api.github.com/repos/";
-        private static readonly string RateLimitRequestUri = @"https://api.github.com/rate_limit";
-        private static readonly string clientParams = @"client_id={0}&client_secret={1}";
+        private readonly string githubApiUri = @"https://api.github.com/repos/";
+        private readonly string RateLimitRequestUri = @"https://api.github.com/rate_limit";
+        private readonly string clientParams = @"client_id={0}&client_secret={1}";
 
-        public static IList<Commit> GetCommits(
+        private static DateTime _epoch = new DateTime(1970, 1, 1);
+
+        private Logger _log;
+
+        public HttpUtil(Logger log)
+        {
+            _log = log ?? throw new ArgumentNullException(nameof(log));
+        }
+
+        public IList<Commit> GetCommits(
             string repository,
             string branch,
             string startSha,
@@ -39,7 +48,7 @@ namespace GitLogger.Library
 
                 if (jArray.Count == 0)
                 {
-                    Console.WriteLine("WARNING: Exiting commit lookup without finding the original commit");
+                    _log.Warning("WARNING: Exiting commit lookup without finding the original commit");
                     break;
                 }
 
@@ -58,7 +67,7 @@ namespace GitLogger.Library
             return commits;
         }
 
-        public static void UpdateWithMetadata(
+        public void UpdateWithMetadata(
             string codeRepository,
             string issueRepository,
             IList<Commit> commits,
@@ -83,12 +92,14 @@ namespace GitLogger.Library
 
                 if (jArray.Count == 0)
                 {
-                    Console.WriteLine("WARNING: Exiting PR lookup without finiding PRs for all commits");
+                    _log.Warning("WARNING: Exiting PR lookup without finiding PRs for all commits");
                     break;
                 }
 
                 foreach (var entry in jArray)
                 {
+                    var prNumber = Int32.Parse(entry.Value<string>("number"));
+
                     // Get merge commit sha
                     var commitSha = entry.Value<string>("merge_commit_sha");
 
@@ -106,9 +117,21 @@ namespace GitLogger.Library
                     }
                 }
             }
+
+            // incase of release branch commits, we dont have PRs, so try to parse the commit text to figure out the issue
+            foreach (var commit in commits)
+            {
+                if (commit.Issues == null || commit.Issues.Count == 0)
+                {
+                    UpdateCommitIssuesFromText(commit.Message, commit, issueRepository);
+                }
+            }
         }
 
-        private static void UpdateWithMetadataFromJToken(JToken entry, Commit commit, string issueRepository)
+        private void UpdateWithMetadataFromJToken(
+            JToken entry,
+            Commit commit,
+            string issueRepository)
         {
             // Get PR data
             var prUrl = entry.Value<string>("html_url");
@@ -119,13 +142,21 @@ namespace GitLogger.Library
                 commit.PR = Tuple.Create(prId, prUrl);
             }
 
-            // Get body and issue data
             var body = entry.Value<string>("body");
+            UpdateCommitIssuesFromText(body, commit, issueRepository);
+        }
+
+        private void UpdateCommitIssuesFromText(
+            string body,
+            Commit commit,
+            string issueRepository)
+        {
+            // Get issue data
             var issueUrls = GetLinks(body, issueRepository);
 
             if (issueUrls.Count() > 1)
             {
-                Console.WriteLine($"WARNING: Multiple issues found in PR body.");
+                _log.Warning($"WARNING: Multiple issues found in PR body for commit '{commit.Sha}'.");
             }
 
             var issues = new HashSet<Tuple<int, string>>();
@@ -142,7 +173,7 @@ namespace GitLogger.Library
             commit.Issues = issues;
         }
 
-        public static int GetIdFromUrl(string url)
+        public int GetIdFromUrl(string url)
         {
             var result = -1;
 
@@ -158,10 +189,12 @@ namespace GitLogger.Library
         }
 
         // Source - https://stackoverflow.com/questions/9125016/get-url-from-a-text
-        public static List<string> GetLinks(string message, string issueRepository)
+        public List<string> GetLinks(
+            string message,
+            string issueRepository)
         {
             List<string> list = new List<string>();
-            Regex urlRx = new Regex(@"((https?|ftp|file)\://|www.)[A-Za-z0-9\.\-]+(/[A-Za-z0-9\?\&\=;\+!'\(\)\*\-\._~%]*)*", 
+            Regex urlRx = new Regex(@"((https?|ftp|file)\://|www.)[A-Za-z0-9\.\-]+(/[A-Za-z0-9\?\&\=;\+!'\(\)\*\-\._~%]*)*",
                 RegexOptions.IgnoreCase);
 
             MatchCollection matches = urlRx.Matches(message);
@@ -187,7 +220,7 @@ namespace GitLogger.Library
 
 
         // Not used since an API key was added which increases the limit on api calls
-        public static string GetCachedOrHttpResponse(
+        public string GetCachedOrHttpResponse(
             string uri,
             string cachePath,
             Tuple<string, string> clientDetails,
@@ -216,14 +249,14 @@ namespace GitLogger.Library
             }
             else
             {
-                Console.WriteLine($"Making HTTP request: {uriWithClientData}");
+                _log.Info($"Making HTTP request: {uriWithClientData}");
 
                 BlockTillRateLimitRefresh(clientDetails, isRequestTypeSearch);
 
                 using (var httpResponse = httpRequest.GetResponse())
                 using (var dataStream = httpResponse.GetResponseStream())
                 {
-                    Console.WriteLine($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
+                    _log.Info($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
                     var reader = new StreamReader(dataStream);
                     var objResponse = reader.ReadToEnd();
 
@@ -231,7 +264,7 @@ namespace GitLogger.Library
                     {
                         FileUtil.CacheResponse(cacheFilePath, objResponse as string);
                     }
-               
+
                     responseString = objResponse as string;
                 }
             }
@@ -239,7 +272,7 @@ namespace GitLogger.Library
             return responseString;
         }
 
-        public static string GetHttpResponse(
+        public string GetHttpResponse(
             string uri,
             Tuple<string, string> clientDetails,
             bool isRequestTypeSearch)
@@ -251,14 +284,14 @@ namespace GitLogger.Library
             httpRequest.Accept = "application/json";
             httpRequest.UserAgent = "gitlogger";
 
-            Console.WriteLine($"Making HTTP request: {uriWithClientData}");
+            _log.Info($"Making HTTP request: {uriWithClientData}");
 
             BlockTillRateLimitRefresh(clientDetails, isRequestTypeSearch);
 
             using (var httpResponse = httpRequest.GetResponse())
             using (var dataStream = httpResponse.GetResponseStream())
             {
-                Console.WriteLine($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
+                _log.Info($"Github api rate limit left: {httpResponse.Headers.Get("X-RateLimit-Remaining")}");
                 var reader = new StreamReader(dataStream);
                 var objResponse = reader.ReadToEnd();
                 responseString = objResponse as string;
@@ -267,7 +300,9 @@ namespace GitLogger.Library
             return responseString;
         }
 
-        private static void BlockTillRateLimitRefresh(Tuple<string, string> clientDetails, bool isRequestTypeSearch)
+        private void BlockTillRateLimitRefresh(
+            Tuple<string, string> clientDetails,
+            bool isRequestTypeSearch)
         {
             var uriWithClientData = RateLimitRequestUri + "?" + string.Format(clientParams, clientDetails.Item1, clientDetails.Item2);
             var httpRequest = (HttpWebRequest)WebRequest.Create(uriWithClientData);
@@ -293,15 +328,16 @@ namespace GitLogger.Library
 
                 var limit = rateJObject.Value<int>("limit");
                 var remaining = rateJObject.Value<int>("remaining");
-                var reset = rateJObject.Value<double>("reset");
+                var resetSeconds = rateJObject.Value<double>("reset");
 
                 if (remaining == 0)
                 {
-                    var timeOut = TimeSpan.FromSeconds(reset);
-                    var dt = new DateTime(timeOut.Ticks);
-                    Console.WriteLine($"WARNING: Github api rate limit reached. Sleeping till {dt.ToLocalTime()}");
+                    var dt = _epoch.AddSeconds(resetSeconds);
+                    var dtNow = DateTime.UtcNow;
+                    var timeOut = dt.Subtract(dtNow);
 
-                    Thread.Sleep(timeOut.Subtract(TimeSpan.FromTicks(DateTime.Now.ToUniversalTime().Ticks)));
+                    _log.Warning($"WARNING: Github api rate limit reached. Sleeping from {dtNow.ToLocalTime()} till {dt.ToLocalTime()}");
+                    Thread.Sleep(timeOut);
                 }
             }
 

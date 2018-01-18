@@ -11,8 +11,8 @@ namespace GitLogger.Library
         public static Tuple<string, string> GetAppCredentials()
         {
             Tuple<string, string> result = null;
-            var appId = Environment.GetEnvironmentVariable("GitLoggerGitHubClientId");
-            var appSecret = Environment.GetEnvironmentVariable("GitLoggerGitHubClientSecret");
+            var appId = Environment.GetEnvironmentVariable("GIT_LOGGER_CLIENT_ID");
+            var appSecret = Environment.GetEnvironmentVariable("GIT_LOGGER_CLIENT_SECRET");
 
             result = Tuple.Create(appId, appSecret);
 
