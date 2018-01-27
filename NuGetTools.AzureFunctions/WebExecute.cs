@@ -55,7 +55,7 @@ namespace NuGetTools.AzureFunctions
 
                     try
                     {
-                        var httpUtil = new HttpUtil(new Logger(log));
+                        var httpUtil = new GitLogger.Library.HttpUtil(new Logger(log));
                         var commits = httpUtil.GetCommits(codeRepository, branchName, startCommitSha, clientDetails);
                         httpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
                         GenerateOutputFile(outputFormat, commits, out string resultFilePath, out string responseFileName);

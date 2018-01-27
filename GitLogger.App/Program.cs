@@ -26,7 +26,7 @@ namespace GitLogger.App
 
             var clientDetails = FileUtil.GetAppCredentials(Path.Combine(logFolder, "clientcredentials.txt"));
 
-            var httpUtil = new HttpUtil(new Logger());
+            var httpUtil = new Library.HttpUtil(new Logger());
             var commits = httpUtil.GetCommits(codeRepository, branchName, startSha, clientDetails);
             httpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
 

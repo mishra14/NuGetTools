@@ -25,5 +25,10 @@ namespace NuGetStatus.Library
         public int ErrorCount { get; set; }
 
         public IList<Issue> Issues { get; set; }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
