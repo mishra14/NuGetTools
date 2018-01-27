@@ -6,7 +6,7 @@ namespace NuGetStatus.Library
 {
     public static class Constants
     {
-        public const string VstsPatEnvVarName = "VstsPatEnvVar";
+        public const string VstsPatEnvVarName = "VSTS_PAT_ENV_VAR";
 
         public const string DevDivProjectGuid = "0bdbc590-a062-4c3f-b0f6-9383f67865ee";
 
