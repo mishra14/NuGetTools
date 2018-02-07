@@ -8,6 +8,12 @@ namespace NuGetStatus.Library
     {
         public const string VstsPatEnvVarName = "VSTS_PAT_ENV_VAR";
 
+        public const string SendgridPatEnvVarName = "SENDGRID_PAT_ENV_VAR";
+
+        public const string SendgridDestEmailAddress = "SENDGRID_DEST_EMAIL";
+
+        public const string SendgridSrcEmailAddress = "SENDGRID_SRC_EMAIL";
+
         public const string DevDivProjectGuid = "0bdbc590-a062-4c3f-b0f6-9383f67865ee";
 
         public const int NuGetOfficialBuildDefinitionId = 5868;

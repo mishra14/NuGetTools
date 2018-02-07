@@ -5,10 +5,12 @@
     <AssemblyName>NuGetTools.AzureFunctions</AssemblyName>
   </PropertyGroup>
   <ItemGroup>    
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.2" />
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.2" />    
+    <PackageReference Include="Sendgrid" Version="9.9.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GitLogger.Library\GitLogger.Library.csproj" />
+    <ProjectReference Include="..\NuGetStatus.Library\NuGetStatus.Library.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuGetStatus.Library", "NuGe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuGetStatus.App", "NuGetStatus.App\NuGetStatus.App.csproj", "{D01A5B12-7AEF-4660-BF0A-0EACF4DDCAB2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGetTools.Common", "NuGetTools.Common\NuGetTools.Common.csproj", "{9C2DEF9A-F8D8-42DF-9624-8F63B583B787}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NuGetTools.Common", "NuGetTools.Common\NuGetTools.Common.csproj", "{9C2DEF9A-F8D8-42DF-9624-8F63B583B787}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
