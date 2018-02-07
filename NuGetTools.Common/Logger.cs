@@ -36,7 +36,7 @@ namespace NuGetTools.Common
         private void Log(TraceLevel level, string message)
         {
             LogToConsole(message);
-            LogToTraceWriter(TraceLevel.Error, message);
+            LogToTraceWriter(level, message);
         }
 
         private void LogToConsole(string message)
@@ -46,7 +46,7 @@ namespace NuGetTools.Common
 
         private void LogToTraceWriter(TraceLevel level, string message)
         {
-            _traceWriter.Trace(new TraceEvent(level, message));
+            LogToTraceWriter(new TraceEvent(level, message));
         }
 
         private void LogToTraceWriter(TraceEvent traceEvent)

@@ -3,3 +3,4 @@
 */.vs/
 */*.lock.json
 .vs/
+*.pubxml

@@ -219,7 +219,7 @@ namespace NuGetStatus.Library
             return jObject;
         }
 
-        private static async Task<string> GetResponseAsync(string requestUrl)
+        public static async Task<string> GetResponseAsync(string requestUrl, string responseType = "application/json")
         {
             var result = string.Empty;
 
@@ -230,7 +230,7 @@ namespace NuGetStatus.Library
                 using (var client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.Accept.Add(
-                        new MediaTypeWithQualityHeaderValue("application/json"));
+                        new MediaTypeWithQualityHeaderValue(responseType));
 
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
                         Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", personalaccesstoken))));
