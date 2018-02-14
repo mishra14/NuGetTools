@@ -25,9 +25,6 @@ namespace NuGetStatus.Library
         // release definition api - https://devdiv.vsrm.visualstudio.com/{projectIdGuid}/_apis/Release/releases/{releaseId}
         // release definition api example - https://devdiv.vsrm.visualstudio.com/0bdbc590-a062-4c3f-b0f6-9383f67865ee/_apis/Release/releases/64073
 
-        // read VSTS Personal Access Token from environment variables
-        private static string VstsPat = Environment.GetEnvironmentVariable(Constants.VstsPatEnvVarName);
-
 
         public static async Task<BuildDefinition> GetBuildDefintionAsync(Project project, int buildDefinitionId)
         {
@@ -225,7 +222,7 @@ namespace NuGetStatus.Library
 
             try
             {
-                var personalaccesstoken = VstsPat ?? throw new ArgumentNullException(nameof(VstsPat));
+                var personalaccesstoken = EnvVars.VstsPat;
 
                 using (var client = new HttpClient())
                 {

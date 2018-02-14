@@ -1,25 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace NuGetStatus.Library
 {
     public static class Constants
     {
-        public const string VstsPatEnvVarName = "VSTS_PAT_ENV_VAR";
-
-        public const string SendgridPatEnvVarName = "SENDGRID_PAT_ENV_VAR";
-
-        public const string SendgridDestEmailAddress = "SENDGRID_DEST_EMAIL";
-
-        public const string SendgridSrcEmailAddress = "SENDGRID_SRC_EMAIL";
-
-        public const string DevDivProjectGuid = "0bdbc590-a062-4c3f-b0f6-9383f67865ee";
-
-        public const int NuGetOfficialBuildDefinitionId = 5868;
-
-        public const int NuGetOfficialYamlBuildDefinitionId = 8117;
-
         public const string DevDiv = "DevDiv";
 
         public const string Name = "name";
@@ -105,5 +89,11 @@ namespace NuGetStatus.Library
         public const string ColumnNumber = "columnNumber";
 
         public const string Code = "code";
+
+        public const string Subject = "subject";
+
+        public const string Destination = "destination";
+
+        public const string Content = "content";
     }
 }
