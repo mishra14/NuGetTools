@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
@@ -18,19 +20,22 @@ namespace NuGetTools.AzureFunctions
         private const string VALIDATE_VSIX = "Validate Vsix Localization";
         private const string VALIDATE_REPO = "Validate Repository Artifacts Localization";
 
+        // TimerTrigger("0 30 9 * * 1") -> Monday 9:30 am
+        // TimerTrigger("0 */1 * * * *") -> Every minute
+        // TimerTrigger("0 * */1 * * *") -> Every hour
         [FunctionName("TimedExecute")]
-        public static void Run([TimerTrigger("0 30 9 * * 1")]TimerInfo myTimer, TraceWriter log)
+        public static void Run([TimerTrigger("0 * */1 * * *")]TimerInfo myTimer, TraceWriter log)
         {
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
             var project = new Project()
             {
-                Id = Constants.DevDivProjectGuid,
+                Id = EnvVars.DevDivProjectGuid,
                 Name = Constants.DevDiv
             };
 
-            var definitionId = Constants.NuGetOfficialYamlBuildDefinitionId;
-            var definition = VSTSUtil.GetBuildDefintionAsync(project, definitionId).Result;
+            var definitionId = EnvVars.NuGetOfficialBuildDefinitionId;
+            var definition = VSTSUtil.GetBuildDefintionAsync(project, Int32.Parse(definitionId)).Result;
             var latestBuild = VSTSUtil.GetLatestBuildAsync(definition).Result;
 
             if (latestBuild != null)
@@ -55,7 +60,7 @@ namespace NuGetTools.AzureFunctions
 
             log.Info($"{summaries.Count} summaries found");
 
-            SendEmail(GetEmailSummaryInPlainText(summaries), GetEmailSummaryInHtml(summaries), logger).Wait();
+            SendEmailViaFlow(GetEmailSummaryInPlainText(summaries), GetEmailSummaryInHtml(summaries), logger).Wait();
         }
 
         private static string GetLocalizationSummary(string logString)
@@ -101,15 +106,15 @@ namespace NuGetTools.AzureFunctions
             return builder.ToString();
         }
 
-        private static async Task SendEmail(string plainTextMessage, string htmlMessage, Logger logger) 
+        private static async Task SendEmailViaSendgrid(string plainTextMessage, string htmlMessage, Logger logger) 
         {
-            var sendGridPat = Environment.GetEnvironmentVariable(Constants.SendgridPatEnvVarName) ?? throw new InvalidOperationException("Unable to read sendgrid PAT!");
-            var sourceMailAddress = Environment.GetEnvironmentVariable(Constants.SendgridSrcEmailAddress) ?? throw new InvalidOperationException("Unable to read source email for sendgrid!");
-            var destMailAddress = Environment.GetEnvironmentVariable(Constants.SendgridDestEmailAddress) ?? throw new InvalidOperationException("Unable to read destination email for sendgrid!");
+            var SendgridPat = EnvVars.SendgridPat;
+            var sourceMailAddress = EnvVars.SrcEmailAddress;
+            var destMailAddress = EnvVars.DestEmailAddress;
 
-            logger.Info($"Sending email to {sourceMailAddress} with the following message -{Environment.NewLine}{plainTextMessage}");
+            logger.Info($"Sending email to {sourceMailAddress} with the following message - {Environment.NewLine}{plainTextMessage}");
 
-            var client = new SendGridClient(sendGridPat);
+            var client = new SendGridClient(SendgridPat);
             var from = new EmailAddress(sourceMailAddress);
             var subject = $"Localization status report {DateTime.Now}";
             var to = new EmailAddress(destMailAddress);
@@ -117,6 +122,33 @@ namespace NuGetTools.AzureFunctions
             var htmlContent = htmlMessage;
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
             var response = await client.SendEmailAsync(msg);
+        }
+
+        private static async Task SendEmailViaFlow(string plainTextMessage, string htmlMessage, Logger logger)
+        {
+            var destEmailAddress = EnvVars.DestEmailAddress;
+            var flowUrl = EnvVars.FlowUrl;
+
+            logger.Info($"Sending email to {destEmailAddress} with the following message - {Environment.NewLine}{plainTextMessage}");
+
+            using (var httpClient = new HttpClient())
+            {
+                var values = new Dictionary<string, string>()
+                {
+                    { Constants.Subject, $"Localization status report {DateTime.Now}"},
+                    { Constants.Content, htmlMessage},
+                    { Constants.Destination, destEmailAddress}
+                };
+
+                var response = await httpClient.PostAsJsonAsync(flowUrl, values);
+
+                logger.Info($"Response Code: {response.StatusCode}");
+
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    logger.Info($"Response: {await response.Content.ReadAsStringAsync()}");
+                }
+            }
         }
     }
 }

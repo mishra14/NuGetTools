@@ -17,12 +17,12 @@ namespace NuGetStatus.App
         {
             var project = new Project()
             {
-                Id = Constants.DevDivProjectGuid,
+                Id = EnvVars.DevDivProjectGuid,
                 Name = Constants.DevDiv
             };
 
-            var definitionId = Constants.NuGetOfficialYamlBuildDefinitionId;
-            var definition = VSTSUtil.GetBuildDefintionAsync(project, definitionId).Result;
+            var definitionId = EnvVars.NuGetOfficialBuildDefinitionId;
+            var definition = VSTSUtil.GetBuildDefintionAsync(project, Int32.Parse(definitionId)).Result;
             var latestBuild = VSTSUtil.GetLatestBuildAsync(definition).Result;
 
             if (latestBuild != null)
