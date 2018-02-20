@@ -22,9 +22,11 @@ namespace NuGetTools.AzureFunctions
 
         // TimerTrigger("0 30 9 * * 1") -> Monday 9:30 am
         // TimerTrigger("0 */1 * * * *") -> Every minute
-        // TimerTrigger("0 * */1 * * *") -> Every hour
+        // TimerTrigger("0 0 */1 * * *") -> Every hour
+        // TimerTrigger("0 0 6 */1 * *") -> Every day at 6 UTC
+        // TimerTrigger("0 0 16 * * 1") -> Every Monday 8:00 am PST
         [FunctionName("TimedExecute")]
-        public static void Run([TimerTrigger("0 * */1 * * *")]TimerInfo myTimer, TraceWriter log)
+        public static void Run([TimerTrigger("0 0 16 * * 1")]TimerInfo myTimer, TraceWriter log)
         {
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
