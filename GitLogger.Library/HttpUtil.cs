@@ -74,9 +74,17 @@ namespace GitLogger.Library
             Tuple<string, string> clientDetails)
         {
             var commitLookUp = new Dictionary<string, Commit>();
+            var prToCommitLookUp = new Dictionary<int, Commit>();
 
             foreach (var commit in commits)
             {
+                var pr = GetPrFromCommit(commit, codeRepository);
+
+                if (pr != null)
+                {
+                    prToCommitLookUp.Add(pr.Item1, commit);
+                }
+
                 commitLookUp.Add(commit.Sha, commit);
             }
 
@@ -98,13 +106,25 @@ namespace GitLogger.Library
 
                 foreach (var entry in jArray)
                 {
-                    var prNumber = Int32.Parse(entry.Value<string>("number"));
+                    // Get prId
+                    var prId = Int32.Parse(entry.Value<string>("number"));
 
                     // Get merge commit sha
                     var commitSha = entry.Value<string>("merge_commit_sha");
 
                     // If the sha is in the look up, then get more info
                     if (!string.IsNullOrEmpty(commitSha) && commitLookUp.TryGetValue(commitSha, out var commit))
+                    {
+                        UpdateWithMetadataFromJToken(entry, commit, issueRepository);
+
+                        commitLookUp.Remove(commit.Sha);
+
+                        if (commitLookUp.Count == 0)
+                        {
+                            break;
+                        }
+                    }
+                    else if (prToCommitLookUp.TryGetValue(prId, out commit))
                     {
                         UpdateWithMetadataFromJToken(entry, commit, issueRepository);
 
@@ -144,6 +164,23 @@ namespace GitLogger.Library
 
             var body = entry.Value<string>("body");
             UpdateCommitIssuesFromText(body, commit, issueRepository);
+        }
+
+        private Tuple<int, string> GetPrFromCommit(Commit commit, string codeRepository)
+        {
+            var message = commit.Message;
+            var urlRx = new Regex(@"(#\d+)", RegexOptions.IgnoreCase);
+
+            var matches = urlRx.Matches(message);
+            foreach (Match match in matches)
+            {
+                var prId = match.Value.Substring(1, match.Length - 1);
+                var prUrl = $"{codeRepository}/pull/{prId}";
+
+                return Tuple.Create(GetIdFromUrl(prUrl), prUrl);
+            }
+
+            return null;
         }
 
         private void UpdateCommitIssuesFromText(

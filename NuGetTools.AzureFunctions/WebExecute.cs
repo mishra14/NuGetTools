@@ -23,7 +23,6 @@ namespace NuGetTools.AzureFunctions
             log.Info("GitLogger: C# HTTP trigger function 'GitLoggerWebExecute' processed a request.");
             var response = req.CreateResponse();
 
-
             if (req.Method == HttpMethod.Get)
             {                
                 var codeRepository = req.GetQueryNameValuePairs().SingleOrDefault(pair => pair.Key == "codeRepoName").Value;
@@ -55,7 +54,7 @@ namespace NuGetTools.AzureFunctions
 
                     try
                     {
-                        var httpUtil = new GitLogger.Library.HttpUtil(new Logger(log));
+                        var httpUtil = new HttpUtil(new Logger(log));
                         var commits = httpUtil.GetCommits(codeRepository, branchName, startCommitSha, clientDetails);
                         httpUtil.UpdateWithMetadata(codeRepository, issueRepository, commits, clientDetails);
                         GenerateOutputFile(outputFormat, commits, out string resultFilePath, out string responseFileName);
@@ -149,7 +148,6 @@ namespace NuGetTools.AzureFunctions
     /// </summary>
     public static class NuGetStatusWebExecute
     {
-
         [FunctionName("NuGetStatusWebExecute")]
         public static HttpResponseMessage Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "status/request")]HttpRequestMessage req, TraceWriter log)
         {

@@ -1,6 +1,5 @@
-﻿using System;
+﻿using NuGetTools.Common;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NuGetStatus.Library
@@ -25,9 +24,9 @@ namespace NuGetStatus.Library
 
         public IList<TimelineRecord> TimelineRecords { get; set; }
 
-        public async Task PopulateTimeLine()
+        public async Task PopulateTimeLine(Logger logger)
         {
-            TimelineRecords = await VSTSUtil.GetBuildTimelineRecordsAsync(this);
+            TimelineRecords = await VSTSUtil.GetBuildTimelineRecordsAsync(this, logger);
         }
     }
 }

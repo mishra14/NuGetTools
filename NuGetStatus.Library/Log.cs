@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+﻿using System.Threading.Tasks;
 using NuGetTools.Common;
 
 namespace NuGetStatus.Library
@@ -17,11 +13,11 @@ namespace NuGetStatus.Library
 
         public string Url { get; set; }
 
-        public async Task<string> GetLogContentAsync(Logger log)
+        public async Task<string> GetLogContentAsync(Logger logger)
         {
             if (_logContent == null)
             {
-                _logContent = await VSTSUtil.GetResponseAsync(Url, "application/text");
+                _logContent = await VSTSUtil.GetResponseAsync(Url, logger, "application/text");
             }
 
             return _logContent;

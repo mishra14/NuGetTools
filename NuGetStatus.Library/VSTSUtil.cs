@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using NuGetTools.Common;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -26,11 +27,11 @@ namespace NuGetStatus.Library
         // release definition api example - https://devdiv.vsrm.visualstudio.com/0bdbc590-a062-4c3f-b0f6-9383f67865ee/_apis/Release/releases/64073
 
 
-        public static async Task<BuildDefinition> GetBuildDefintionAsync(Project project, int buildDefinitionId)
+        public static async Task<BuildDefinition> GetBuildDefintionAsync(Project project, int buildDefinitionId, Logger logger)
         {
             var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Definitions}/{buildDefinitionId}";
 
-            var json = await GetJsonResponseAsync(url);
+            var json = await GetJsonResponseAsync(url, logger);
 
             return new BuildDefinition()
             {
@@ -41,11 +42,11 @@ namespace NuGetStatus.Library
             };
         }
 
-        public static async Task<Build> GetLatestBuildAsync(BuildDefinition definition)
+        public static async Task<Build> GetLatestBuildAsync(BuildDefinition definition, Logger logger)
         {
             var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}?{Constants.Definitions}={definition.Id}&{Constants.StatusFilter}={Status.Completed.ToString()}&${Constants.Top}=1";
 
-            var response = await GetJsonResponseAsync(url);
+            var response = await GetJsonResponseAsync(url, logger);
             var json = response[Constants.Value]?.Value<JArray>()[0];
 
             return new Build()
@@ -61,11 +62,11 @@ namespace NuGetStatus.Library
             };
         }
 
-        public static async Task<IList<TimelineRecord>> GetBuildTimelineRecordsAsync(Build build)
+        public static async Task<IList<TimelineRecord>> GetBuildTimelineRecordsAsync(Build build, Logger logger)
         {
             var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{build.BuildDefinition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}/{build.Id}/{Constants.Timeline}";
 
-            var response = await GetJsonResponseAsync(url);
+            var response = await GetJsonResponseAsync(url, logger);
             var recordsArray = response[Constants.Records]?.Value<JArray>();
             var records = new List<TimelineRecord>();
 
@@ -163,11 +164,11 @@ namespace NuGetStatus.Library
             return log;
         }
 
-        public static async Task<Release> GetReleaseAsync(Build build)
+        public static async Task<Release> GetReleaseAsync(Build build, Logger logger)
         {
             var url = $@"{Url.DevDivReleaseUrl}/{Constants.Apis}/{Constants.Release}/{Constants.Releases}?{Constants.ArtifactTypeId}={Constants.Build}&{Constants.ArtifactVersionId}={build.Id}&{Constants.SourceId}={build.BuildDefinition.Project.Id}:{build.BuildDefinition.Id}";
 
-            var response = await GetJsonResponseAsync(url);
+            var response = await GetJsonResponseAsync(url, logger);
             var json = response[Constants.Value]?.Value<JArray>()[0];
 
             return new Release()
@@ -207,16 +208,16 @@ namespace NuGetStatus.Library
             };
         }
 
-        private static async Task<JObject> GetJsonResponseAsync(string requestUrl)
+        private static async Task<JObject> GetJsonResponseAsync(string requestUrl, Logger logger)
         {
-            var response = await GetResponseAsync(requestUrl);
+            var response = await GetResponseAsync(requestUrl, logger);
 
             var jObject = JObject.Parse(response);
 
             return jObject;
         }
 
-        public static async Task<string> GetResponseAsync(string requestUrl, string responseType = "application/json")
+        public static async Task<string> GetResponseAsync(string requestUrl, Logger logger, string responseType = "application/json")
         {
             var result = string.Empty;
 
@@ -241,7 +242,7 @@ namespace NuGetStatus.Library
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                logger.Error(ex.ToString());
             }
 
             return result;

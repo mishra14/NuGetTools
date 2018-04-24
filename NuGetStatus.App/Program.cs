@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
-using NuGetStatus.Library;
+﻿using NuGetStatus.Library;
+using NuGetTools.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,18 +21,17 @@ namespace NuGetStatus.App
                 Name = Constants.DevDiv
             };
 
+            var logger = new Logger();
             var definitionId = EnvVars.NuGetOfficialBuildDefinitionId;
-            var definition = VSTSUtil.GetBuildDefintionAsync(project, Int32.Parse(definitionId)).Result;
-            var latestBuild = VSTSUtil.GetLatestBuildAsync(definition).Result;
+            var definition = VSTSUtil.GetBuildDefintionAsync(project, Int32.Parse(definitionId), logger).Result;
+            var latestBuild = VSTSUtil.GetLatestBuildAsync(definition, logger).Result;
 
             if (latestBuild != null)
             {
-                latestBuild.PopulateTimeLine().Wait();
+                latestBuild.PopulateTimeLine(logger).Wait();
             }
 
             var validations = latestBuild.TimelineRecords.Where(r => r.Name == VALIDATE_VSIX || r.Name == VALIDATE_REPO);
-            var logger = new NuGetTools.Common.Logger();
-
             var summaries = new List<LocValidationSummary>();
 
             foreach (var validation in validations)
