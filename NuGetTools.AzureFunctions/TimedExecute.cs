@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -7,8 +8,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json;
 using NuGetStatus.Library;
 using NuGetTools.Common;
+using NuGetValidator.Localization;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
@@ -26,7 +29,7 @@ namespace NuGetTools.AzureFunctions
         // TimerTrigger("0 0 6 */1 * *") -> Every day at 6 UTC
         // TimerTrigger("0 0 16 * * 1") -> Every Monday 8:00 am PST
         [FunctionName("TimedExecute")]
-        public static void Run([TimerTrigger("0 0 16 * * 1")]TimerInfo myTimer, TraceWriter log)
+        public static void Run([TimerTrigger("0 */1 * * * *")]TimerInfo myTimer, TraceWriter log)
         {
             log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
 
@@ -39,8 +42,9 @@ namespace NuGetTools.AzureFunctions
             var logger = new Logger(log);
 
             var definitionId = EnvVars.NuGetOfficialBuildDefinitionId;
-            var definition = VSTSUtil.GetBuildDefintionAsync(project, Int32.Parse(definitionId), logger).Result;
-            var latestBuild = VSTSUtil.GetLatestBuildAsync(definition, logger).Result;
+            var definition = VSTSUtil.GetBuildDefintionAsync(project, Int32.Parse("8118"), logger).Result;
+            var latestBuild = VSTSUtil.GetBuildAsync(definition, "1628559", logger).Result;
+            //var latestBuild = VSTSUtil.GetLatestBuildAsync(definition, logger).Result;
 
             if (latestBuild != null)
             {
@@ -48,46 +52,43 @@ namespace NuGetTools.AzureFunctions
             }
 
             var validations = latestBuild.TimelineRecords.Where(r => r.Name == VALIDATE_VSIX || r.Name == VALIDATE_REPO);
-            var summaries = new List<LocValidationSummary>();
 
             foreach (var validation in validations)
             {
-                var summary = GetLocalizationSummary(validation.Log.GetLogContentAsync(logger).Result);
+                var path = GetResultSummaryPath(validation.Log.GetLogContentAsync(logger).Result);
 
-                if (!string.IsNullOrEmpty(summary))
+                if (!string.IsNullOrEmpty(path))
                 {
-                    summaries.Add(new LocValidationSummary() { Summary = summary, Title = validation.Name });
-                }
-            }
-
-            log.Info($"{summaries.Count} summaries found");
-
-            SendEmailViaFlow(GetEmailSummaryInPlainText(summaries), GetEmailSummaryInHtml(summaries), logger).Wait();
-        }
-
-        private static string GetLocalizationSummary(string logString)
-        {
-            var lines = logString.Split('\n');
-            var summary = new StringBuilder();
-            var logging = false;
-
-            foreach (var line in lines)
-            {
-                if (logging)
-                {
-                    summary.AppendLine(line);
-                }
-                else
-                {
-                    if (line.Contains(MARKER))
+                    using (var file = new StreamReader(path))
                     {
-                        summary.AppendLine(line);
-                        logging = true;
+                        var resultSummary = JsonConvert.DeserializeObject<ResultSummary>(file.ReadToEnd());
                     }
                 }
             }
 
-            return summary.ToString();
+            //log.Info($"{summaries.Count} summaries found");
+
+            //SendEmailViaFlow(GetEmailSummaryInPlainText(summaries), GetEmailSummaryInHtml(summaries), logger).Wait();
+        }
+
+        private static string GetResultSummaryPath(string logString)
+        {
+            var pathLine = logString.Split(new char[]{'\n', '\r'}, StringSplitOptions.RemoveEmptyEntries)
+                .Where(l => l.Contains("Path:") && l.Contains("ResultSummary.json"))
+                .FirstOrDefault();
+            string path = null;
+
+            if (!string.IsNullOrEmpty(pathLine))
+            {
+                path = pathLine.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+
+                if (path != null)
+                {
+                    path = path.Trim();
+                }
+            }
+
+            return path;
         }
 
         private static string GetEmailSummaryInHtml(List<LocValidationSummary> summaries)

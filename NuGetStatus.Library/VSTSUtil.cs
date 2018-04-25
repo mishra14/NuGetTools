@@ -16,6 +16,8 @@ namespace NuGetStatus.Library
         // latest build
         // build api - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds?definitions={buildDefinitionId}&statusFilter={status}&$top=1&[api-version=2.0]
         // build api example - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds?definitions=5868&statusFilter=completed&$top=1
+        // specific build - https://{accountName}.visualstudio.com/{project}/_apis/build/builds/{buildId}
+        // specific build example - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds/1626454
 
         // release for that build
         // release api - https://devdiv.vsrm.visualstudio.com/_apis/Release/releases?artifactTypeId=Build&sourceId={projectIdGuid}:{buildDefinitionId}&artifactVersionId={buildId}
@@ -45,9 +47,26 @@ namespace NuGetStatus.Library
         public static async Task<Build> GetLatestBuildAsync(BuildDefinition definition, Logger logger)
         {
             var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}?{Constants.Definitions}={definition.Id}&{Constants.StatusFilter}={Status.Completed.ToString()}&${Constants.Top}=1";
-
             var response = await GetJsonResponseAsync(url, logger);
             var json = response[Constants.Value]?.Value<JArray>()[0];
+
+            return new Build()
+            {
+                Id = GetInt(json, Constants.Id),
+                BuildNumber = GetInt(json, Constants.BuildNumber),
+                Status = GetEnum<Status>(json, Constants.Status),
+                Result = GetEnum<Result>(json, Constants.Result),
+                Links = GetLinks(json),
+                SourceBranch = GetString(json, Constants.SourceBranch),
+                SourceCommit = GetString(json, Constants.SourceVersion),
+                BuildDefinition = definition
+            };
+        }
+
+        public static async Task<Build> GetBuildAsync(BuildDefinition definition, string buildId, Logger logger)
+        {
+            var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}/{buildId}";
+            var json = await GetJsonResponseAsync(url, logger);
 
             return new Build()
             {
