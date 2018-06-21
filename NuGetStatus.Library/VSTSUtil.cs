@@ -2,6 +2,7 @@
 using NuGetTools.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -15,7 +16,7 @@ namespace NuGetStatus.Library
 
         // latest build
         // build api - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds?definitions={buildDefinitionId}&statusFilter={status}&$top=1&[api-version=2.0]
-        // build api example - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds?definitions=5868&statusFilter=completed&$top=1
+        // build api example - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds?definitions=8117&statusFilter=completed&$top=1
         // specific build - https://{accountName}.visualstudio.com/{project}/_apis/build/builds/{buildId}
         // specific build example - https://devdiv.visualstudio.com/DefaultCollection/DevDiv/_apis/build/builds/1626454
 
@@ -28,6 +29,12 @@ namespace NuGetStatus.Library
         // release definition api - https://devdiv.vsrm.visualstudio.com/{projectIdGuid}/_apis/Release/releases/{releaseId}
         // release definition api example - https://devdiv.vsrm.visualstudio.com/0bdbc590-a062-4c3f-b0f6-9383f67865ee/_apis/Release/releases/64073
 
+        private static readonly IDictionary<string, Task<Build>> LatestBuildLookUp = new Dictionary<string, Task<Build>>(StringComparer.OrdinalIgnoreCase);
+
+        public static void ResetLatestBuildLookup()
+        {
+            LatestBuildLookUp.Clear();
+        }
 
         public static async Task<BuildDefinition> GetBuildDefintionAsync(Project project, int buildDefinitionId, Logger logger)
         {
@@ -44,16 +51,49 @@ namespace NuGetStatus.Library
             };
         }
 
+        public static async Task<Build> GetLatestBuildForBranchAsync(BuildDefinition definition, Logger logger, string branch)
+        {
+            if (!LatestBuildLookUp.ContainsKey(branch))
+            {
+                var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}?{Constants.Definitions}={definition.Id}&{Constants.StatusFilter}={Status.Completed.ToString()}";
+                var response = await GetJsonResponseAsync(url, logger);
+                var jsonArray = response[Constants.Value]?.Value<JArray>();
+
+                foreach(var json in jsonArray)
+                {
+                    var build = new Build()
+                    {
+                        Id = GetInt(json, Constants.Id),
+                        BuildNumber = GetString(json, Constants.BuildNumber),
+                        Status = GetEnum<Status>(json, Constants.Status),
+                        Result = GetEnum<Result>(json, Constants.Result),
+                        Links = GetLinks(json),
+                        SourceBranch = GetString(json, Constants.SourceBranch),
+                        SourceCommit = GetString(json, Constants.SourceVersion),
+                        BuildDefinition = definition
+                    };
+
+                    if (!LatestBuildLookUp.ContainsKey(build.SourceBranch))
+                    {
+                        LatestBuildLookUp[build.SourceBranch] = Task.FromResult(build);
+                    }
+                }
+            }
+
+            return await LatestBuildLookUp[branch];
+        }
+
         public static async Task<Build> GetLatestBuildAsync(BuildDefinition definition, Logger logger)
         {
-            var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}?{Constants.Definitions}={definition.Id}&{Constants.StatusFilter}={Status.Completed.ToString()}&${Constants.Top}=1";
+            var url = $@"{Url.DevDivUrl}/{Constants.DefaultCollection}/{definition.Project.Id}/{Constants.Apis}/{Constants.Build}/{Constants.Builds}?{Constants.Definitions}={definition.Id}&{Constants.StatusFilter}={Status.Completed.ToString()}&{Constants.Top}=1";
             var response = await GetJsonResponseAsync(url, logger);
-            var json = response[Constants.Value]?.Value<JArray>()[0];
+            var jsonArray = response[Constants.Value]?.Value<JArray>();
+            var json = jsonArray[0];
 
-            return new Build()
+            var build = new Build()
             {
                 Id = GetInt(json, Constants.Id),
-                BuildNumber = GetInt(json, Constants.BuildNumber),
+                BuildNumber = GetString(json, Constants.BuildNumber),
                 Status = GetEnum<Status>(json, Constants.Status),
                 Result = GetEnum<Result>(json, Constants.Result),
                 Links = GetLinks(json),
@@ -61,6 +101,13 @@ namespace NuGetStatus.Library
                 SourceCommit = GetString(json, Constants.SourceVersion),
                 BuildDefinition = definition
             };
+
+            if (!LatestBuildLookUp.ContainsKey(build.SourceBranch))
+            {
+                LatestBuildLookUp[build.SourceBranch] = Task.FromResult(build);
+            }
+
+            return build;
         }
 
         public static async Task<Build> GetBuildAsync(BuildDefinition definition, string buildId, Logger logger)
@@ -71,7 +118,7 @@ namespace NuGetStatus.Library
             return new Build()
             {
                 Id = GetInt(json, Constants.Id),
-                BuildNumber = GetInt(json, Constants.BuildNumber),
+                BuildNumber = GetString(json, Constants.BuildNumber),
                 Status = GetEnum<Status>(json, Constants.Status),
                 Result = GetEnum<Result>(json, Constants.Result),
                 Links = GetLinks(json),
@@ -215,6 +262,28 @@ namespace NuGetStatus.Library
         private static int GetInt(JToken json, string key)
         {
             return json[key]?.Value<int>() ?? -1;
+        }
+
+        private static int GetBuildNumber(JToken json, string key)
+        {
+            var number = -1;
+
+            try
+            {
+                number = json[key]?.Value<int>() ?? -1;
+            }
+            catch (Exception)
+            {
+                var numberString = json[key]?.Value<string>();
+                var numbersplits = numberString.Split('.');
+
+                if (numbersplits.Length > 0)
+                {
+                    number = Int32.Parse(numbersplits.Last());
+                }
+            }
+
+            return number;
         }
 
         private static Links GetLinks(JToken json)
