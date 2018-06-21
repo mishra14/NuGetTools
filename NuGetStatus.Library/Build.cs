@@ -10,7 +10,7 @@ namespace NuGetStatus.Library
 
         public int Id { get; set; }
 
-        public int BuildNumber { get; set; }
+        public string BuildNumber { get; set; }
 
         public Status Status { get; set; }
 
