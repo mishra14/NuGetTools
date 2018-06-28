@@ -238,17 +238,21 @@ namespace GitLogger.Library
             foreach (Match match in matches)
             {
                 var url = match.Value.ToLowerInvariant();
-                var repo = issueRepository.ToLowerInvariant();
-                if (url.Contains(repo) &&
-                    url.Contains("issues"))
-                {
-                    if (Regex.IsMatch(url, @"[\D]*$"))
-                    {
-                        var regex = new Regex(@"[\D]*$");
-                        url = regex.Replace(url, "");
-                    }
 
-                    list.Add(url);
+                foreach (var issueRepo in issueRepository.Split(';'))
+                {
+                    var repo = issueRepo.ToLowerInvariant();
+                    if (url.Contains(repo) &&
+                        (url.Contains("issues") || url.Contains("_workitems")))
+                    {
+                        if (Regex.IsMatch(url, @"[\D]*$"))
+                        {
+                            var regex = new Regex(@"[\D]*$");
+                            url = regex.Replace(url, "");
+                        }
+
+                        list.Add(url);
+                    }
                 }
             }
 
