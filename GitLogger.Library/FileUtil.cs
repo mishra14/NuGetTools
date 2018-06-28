@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -84,7 +82,7 @@ namespace GitLogger.Library
             excelApp.Workbooks.Add();
 
             // This example uses a single workSheet. 
-            Excel._Worksheet workSheet = (Excel.Worksheet)excelApp.ActiveSheet;         
+            Excel._Worksheet workSheet = (Excel.Worksheet)excelApp.ActiveSheet;
 
             workSheet.Cells[1, "A"] = "Area";
             workSheet.Cells[1, "B"] = "PR";
@@ -109,7 +107,7 @@ namespace GitLogger.Library
 
                 if (commit.Issues != null)
                 {
-                    if(commit.Issues.Count > 1)
+                    if (commit.Issues.Count > 1)
                     {
                         foreach (var issue in commit.Issues)
                         {
@@ -200,13 +198,18 @@ namespace GitLogger.Library
 
                     if (commit.Issues != null)
                     {
-                        foreach (var issue in commit.Issues)
+                        var issues = commit.Issues.ToList();
+                        for (var i = 0; i < issues.Count; i++)
                         {
+                            var issue = issues[i];
                             issueStringBuilder.Append($"<a href=\"{issue.Item2}\">{issue.Item1}</a>");
-                            issueStringBuilder.Append($"</br>");
+
+                            if (i < issues.Count - 1)
+                            {
+                                issueStringBuilder.Append($"</br>");
+                            }
                         }
                     }
-
 
                     w.WriteLine("<tr>");
                     w.WriteLine($"<td></td>");
@@ -216,7 +219,6 @@ namespace GitLogger.Library
                     w.WriteLine($"<td>{commit.Author}</td>");
                     w.WriteLine($"<td>{commit.SanitizedMessage}</td>");
                     w.WriteLine("<tr>");
-
                 }
 
                 w.WriteLine("</body>");
