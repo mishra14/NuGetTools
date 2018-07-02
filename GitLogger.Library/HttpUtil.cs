@@ -34,16 +34,13 @@ namespace GitLogger.Library
             Tuple<string, string> clientDetails)
         {
             var commits = new List<Commit>();
-
             var page = 1;
             var done = false;
 
             while (!done)
             {
                 var uri = githubApiUri + $"{repository}/commits?sha={branch}&per_page=100&page={page++}";
-
                 var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
-
                 var jArray = JArray.Parse(responseString);
 
                 if (jArray.Count == 0)
@@ -82,20 +79,24 @@ namespace GitLogger.Library
 
                 if (pr != null)
                 {
-                    prToCommitLookUp.Add(pr.Item1, commit);
+                    if (prToCommitLookUp.ContainsKey(pr.Item1))
+                    {
+                        _log.Warning($"WARNING: PR {pr.Item1} is related to commit {commit} and commit {prToCommitLookUp[pr.Item1]}");
+                    }
+                    else
+                    {
+                        prToCommitLookUp.Add(pr.Item1, commit);
+                    }
                 }
 
                 commitLookUp.Add(commit.Sha, commit);
             }
 
             var page = 1;
-
             while (commitLookUp.Count > 0)
             {
                 var uri = githubApiUri + $"{codeRepository}/pulls?state=all&per_page=100&page={page++}";
-
                 var responseString = GetHttpResponse(uri, clientDetails, isRequestTypeSearch: false);
-
                 var jArray = JArray.Parse(responseString);
 
                 if (jArray.Count == 0)
@@ -116,7 +117,6 @@ namespace GitLogger.Library
                     if (!string.IsNullOrEmpty(commitSha) && commitLookUp.TryGetValue(commitSha, out var commit))
                     {
                         UpdateWithMetadataFromJToken(entry, commit, issueRepository);
-
                         commitLookUp.Remove(commit.Sha);
 
                         if (commitLookUp.Count == 0)
@@ -127,7 +127,6 @@ namespace GitLogger.Library
                     else if (prToCommitLookUp.TryGetValue(prId, out commit))
                     {
                         UpdateWithMetadataFromJToken(entry, commit, issueRepository);
-
                         commitLookUp.Remove(commit.Sha);
 
                         if (commitLookUp.Count == 0)

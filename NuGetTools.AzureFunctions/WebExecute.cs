@@ -47,9 +47,7 @@ namespace NuGetTools.AzureFunctions
                 else
                 {
                     log.Info($"GitLogger: Collecting commit details for repository '{codeRepository}' from commit '{startCommitSha}'.");
-
                     var clientDetails = GetAppCredentials(log);
-
                     issueRepository = ValidateAndPopulateIssueRepo(log, codeRepository, issueRepository);
 
                     try

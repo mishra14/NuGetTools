@@ -49,7 +49,11 @@ namespace GitLogger.Library
             Author = author;
             Link = link;
             Message = message;
+        }
 
+        public override string ToString()
+        {
+            return Sha;
         }
     }
 }
